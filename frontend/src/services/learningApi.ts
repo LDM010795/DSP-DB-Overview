@@ -1,4 +1,27 @@
+/**
+ * Learning API Service für DSP Database Overview
+ *
+ * Service für E-Learning-Plattform-Integration:
+ * - Module-Verwaltung (CRUD-Operationen)
+ * - Video-Content-Management
+ * - Ressourcen und Artikel-Verwaltung
+ * - Kategorisierung und Organisation
+ * 
+ * Features:
+ * - Vollständige E-Learning-API-Integration
+ * - JWT-basierte Authentifizierung
+ * - Automatische Token-Injection
+ * - Umfassende Fehlerbehandlung
+ * - Logging für Debugging
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
+ */
+
 import axios from "axios";
+
+// --- API-Konfiguration ---
 
 const API_BASE_URL = "http://localhost:8000/api/elearning";
 
@@ -10,7 +33,9 @@ const learningApi = axios.create({
   },
 });
 
-// Logging
+// --- Request/Response Interceptors ---
+
+// Logging für Debugging
 learningApi.interceptors.request.use(
   (config) => {
     console.log(
@@ -23,6 +48,7 @@ learningApi.interceptors.request.use(
   }
 );
 
+// Fehlerbehandlung und Token-Validierung
 learningApi.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -38,14 +64,15 @@ learningApi.interceptors.response.use(
   }
 );
 
-// Token injection
+// JWT Token-Injection
 learningApi.interceptors.request.use((config) => {
   const token = localStorage.getItem("access");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// -------- API-Funktionen -------------------------------------------------
+// --- API-Typen ---
+
 export interface ModulePayload {
   title: string;
   category_id: number;
@@ -71,36 +98,95 @@ export interface ArticlePayload {
   url: string;
 }
 
+// --- Learning API Service ---
+
 export const learningAPI = {
-  // Module CRUD
+  // --- Module CRUD-Operationen ---
+  
+  /**
+   * Neues Modul erstellen
+   */
   createModule: (data: ModulePayload) => learningApi.post("/modules/", data),
+  
+  /**
+   * Modul aktualisieren
+   */
   updateModule: (id: string | number, data: ModulePayload) =>
     learningApi.put(`/modules/${id}/`, data),
+  
+  /**
+   * Öffentliche Module abrufen
+   */
   getModules: () => learningApi.get("/modules/public/"),
+  
+  /**
+   * Alle Module abrufen (Admin)
+   */
   getModulesAll: () => learningApi.get("/modules/"),
+  
+  /**
+   * Modul-Details abrufen (öffentlich)
+   */
   getModuleDetail: (id: string | number) =>
     learningApi.get(`/modules/public/${id}/`),
+  
+  /**
+   * Modul-Details abrufen (Admin)
+   */
   getModule: (id: string | number) => learningApi.get(`/modules/${id}/detail/`),
-  // Video is Content
+  
+  // --- Content-Management ---
+  
+  /**
+   * Video-Content erstellen
+   */
   createVideo: (data: VideoPayload) =>
     learningApi.post("/modules/content/", data),
+  
+  /**
+   * Video-Content aktualisieren
+   */
   updateVideo: (
     id: string | number,
     data: Partial<VideoPayload & { order?: number }>
   ) => learningApi.patch(`/modules/content/${id}/`, data),
+  
+  /**
+   * Ergänzende Ressource erstellen
+   */
   createResource: (data: ResourcePayload) =>
     learningApi.post("/modules/supplementary/", data),
+  
+  /**
+   * Artikel erstellen
+   */
   createArticle: (data: ArticlePayload) =>
     learningApi.post("/modules/article/", data),
+  
+  /**
+   * Artikel aktualisieren
+   */
   updateArticle: (
     id: string | number,
     data: Partial<ArticlePayload & { order?: number }>
   ) => learningApi.patch(`/modules/article/${id}/`, data),
 
-  // Categories
+  // --- Kategorien-Management ---
+  
+  /**
+   * Alle Kategorien abrufen
+   */
   getCategories: () => learningApi.get("/modules/categories/"),
+  
+  /**
+   * Neue Kategorie erstellen
+   */
   createCategory: (data: { name: string }) =>
     learningApi.post("/modules/categories/", data),
+  
+  /**
+   * Kategorie aktualisieren
+   */
   updateCategory: (id: string | number, data: { name: string }) =>
     learningApi.patch(`/modules/categories/${id}/`, data),
 };

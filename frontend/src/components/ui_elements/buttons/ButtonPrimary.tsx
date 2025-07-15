@@ -1,5 +1,29 @@
+/**
+ * Primary Button Component - DSP Database Overview Frontend
+ *
+ * Haupt-Button-Komponente mit DSP-Orange Design:
+ * - Solid und Outline-Varianten
+ * - Verschiedene Größen (sm, md, lg)
+ * - Icon-Integration (links/rechts)
+ * - Loading-States mit Spinner
+ * - Accessibility-Features
+ * 
+ * Features:
+ * - DSP-Branding-Farben (Orange)
+ * - Responsive Design
+ * - Focus-States für Accessibility
+ * - Disabled-States
+ * - TypeScript-Typisierung
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
+ */
+
 import React from "react";
 import clsx from "clsx";
+
+// --- Komponenten-Interface ---
 
 interface ButtonPrimaryProps {
   children: React.ReactNode;
@@ -15,6 +39,12 @@ interface ButtonPrimaryProps {
   ariaLabel?: string;
 }
 
+/**
+ * Primary Button Komponente
+ * 
+ * Haupt-Button mit DSP-Orange Design für wichtige Aktionen
+ * wie Submit, Save, Create etc.
+ */
 const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
   children,
   onClick,
@@ -28,6 +58,8 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
   type = "button",
   ariaLabel,
 }) => {
+  // --- CSS-Klassen-Konfiguration ---
+  
   const baseClasses =
     "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dsp-orange";
 
@@ -64,9 +96,11 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
         className
       )}
     >
+      {/* --- Loading Spinner --- */}
       {loading ? (
         <div className="animate-spin rounded-full border-2 border-white border-t-transparent w-5 h-5 mr-2" />
       ) : (
+        /* --- Left Icon --- */
         icon &&
         iconPosition === "left" && (
           <span className={clsx(iconClasses[size], children && "mr-2")}>
@@ -75,8 +109,10 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
         )
       )}
 
+      {/* --- Button Content --- */}
       {children}
 
+      {/* --- Right Icon --- */}
       {!loading && icon && iconPosition === "right" && (
         <span className={clsx(iconClasses[size], children && "ml-2")}>
           {icon}

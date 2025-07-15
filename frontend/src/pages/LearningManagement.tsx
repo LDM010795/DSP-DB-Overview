@@ -1,3 +1,24 @@
+/**
+ * Learning Management Page - DSP Database Overview Frontend
+ *
+ * Verwaltungsseite für die E-Learning-Plattform:
+ * - Inhaltserstellung (Module, Videos, Artikel, Kategorien)
+ * - Inhaltsverwaltung und -bearbeitung
+ * - Tab-basierte Navigation
+ * - Kategorien-Management
+ * 
+ * Features:
+ * - Create- und Manage-Modi
+ * - Tab-basierte Formulare
+ * - Kategorien-Verwaltung
+ * - Responsive Design
+ * - DSP-Branding-Farben
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
+ */
+
 import React from "react";
 import ModuleForm from "../components/forms/ModuleForm";
 import VideoForm from "../components/forms/VideoForm";
@@ -7,10 +28,18 @@ import ManageContentPanel from "../components/manage/ManageContentPanel";
 import { useState } from "react";
 import CategoryList from "../components/CategoryList";
 
+/**
+ * Learning Management Komponente
+ * 
+ * Hauptseite für die Verwaltung der E-Learning-Plattform.
+ * Ermöglicht die Erstellung und Verwaltung von Lerninhalten.
+ */
 const LearningManagement: React.FC = () => {
+  // --- State Management ---
   const [view, setView] = useState<"create" | "manage">("create");
   const [tab, setTab] = useState("module");
 
+  // --- Navigation-Konfiguration ---
   const categories = [
     { id: "create", label: "Daten anlegen" },
     { id: "manage", label: "Daten verwalten" },
@@ -25,19 +54,20 @@ const LearningManagement: React.FC = () => {
 
   return (
     <div className="p-8 max-w-[95vw] mx-auto">
+      {/* --- Seiten-Header --- */}
       <h1 className="text-2xl font-bold mb-6">Lernplattform – Verwaltung</h1>
       <p className="text-gray-600 mb-4">
         Hier können Administratoren Inhalte anlegen oder bestehende Daten
         verwalten.
       </p>
 
-      {/* Kategorie-Leiste */}
+      {/* --- Haupt-Navigation --- */}
       <div className="flex space-x-4 mb-6">
         {categories.map((c) => (
           <button
             key={c.id}
             onClick={() => setView(c.id as "create" | "manage")}
-            className={`px-4 py-2 rounded-md font-medium ${
+            className={`px-4 py-2 rounded-md font-medium transition-colors ${
               view === c.id
                 ? "bg-[#ff863d] text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -48,14 +78,16 @@ const LearningManagement: React.FC = () => {
         ))}
       </div>
 
+      {/* --- Create-Modus --- */}
       {view === "create" && (
         <div className="bg-white shadow-lg border border-gray-100 rounded-2xl p-6">
+          {/* --- Tab-Navigation --- */}
           <div className="flex space-x-4 mb-6">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`px-4 py-2 rounded-md font-medium ${
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
                   tab === t.id
                     ? "bg-[#ff863d] text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -65,6 +97,8 @@ const LearningManagement: React.FC = () => {
               </button>
             ))}
           </div>
+          
+          {/* --- Tab-Content --- */}
           {tab === "module" && <ModuleForm />}
           {tab === "video" && <VideoForm />}
           {tab === "article" && <ArticleForm />}
@@ -82,6 +116,7 @@ const LearningManagement: React.FC = () => {
         </div>
       )}
 
+      {/* --- Manage-Modus --- */}
       {view === "manage" && (
         <div className="bg-white shadow-sm rounded-xl p-6">
           <ManageContentPanel />

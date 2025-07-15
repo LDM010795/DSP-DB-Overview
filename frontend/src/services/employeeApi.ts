@@ -1,13 +1,26 @@
 /**
  * Employee API Service für DSP Database Overview
  *
- * Service für Mitarbeiterverwaltung:
- * - Departments (Abteilungen)
- * - Positions (Positionen/Rollen)
- * - Employees (Mitarbeiter)
+ * Service für umfassende Mitarbeiterverwaltung:
+ * - Departments (Abteilungen) - CRUD-Operationen
+ * - Positions (Positionen/Rollen) - CRUD-Operationen
+ * - Employees (Mitarbeiter) - CRUD-Operationen
+ * - Tool Access Management - Berechtigungsverwaltung
+ * 
+ * Features:
+ * - Vollständige CRUD-Operationen für alle Entitäten
+ * - JWT-basierte Authentifizierung
+ * - Automatische Fehlerbehandlung
+ * - TypeScript-Typisierung für alle API-Responses
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
  */
 
 import axios from "axios";
+
+// --- API-Konfiguration ---
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -19,6 +32,8 @@ const employeeApi = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// --- Request/Response Interceptors ---
 
 // JWT Token anhängen
 employeeApi.interceptors.request.use((config) => {
@@ -41,7 +56,8 @@ employeeApi.interceptors.response.use(
   }
 );
 
-// Typen für API-Responses
+// --- Typen für API-Responses ---
+
 export interface Department {
   id: number;
   name: string;
@@ -99,7 +115,8 @@ export interface ToolCreate {
 
 export type ToolUpdate = Partial<ToolCreate>;
 
-// Create/Update Types (ohne ID und Timestamps)
+// --- Create/Update Types (ohne ID und Timestamps) ---
+
 export interface DepartmentCreate {
   name: string;
   description?: string;
@@ -122,9 +139,11 @@ export interface EmployeeCreate {
   is_active?: boolean;
 }
 
-// API-Funktionen
+// --- API-Funktionen ---
+
 export const employeeAPI = {
-  // Department CRUD
+  // --- Department CRUD-Operationen ---
+  
   async getDepartments(): Promise<Department[]> {
     const response = await employeeApi.get("/employees/departments/");
     return response.data;
@@ -150,7 +169,8 @@ export const employeeAPI = {
     await employeeApi.delete(`/employees/departments/${id}/`);
   },
 
-  // Position CRUD
+  // --- Position CRUD-Operationen ---
+  
   async getPositions(): Promise<Position[]> {
     const response = await employeeApi.get("/employees/positions/");
     return response.data;
@@ -176,7 +196,8 @@ export const employeeAPI = {
     await employeeApi.delete(`/employees/positions/${id}/`);
   },
 
-  // Employee CRUD
+  // --- Employee CRUD-Operationen ---
+  
   async getEmployees(): Promise<Employee[]> {
     const response = await employeeApi.get("/employees/employees/");
     return response.data;

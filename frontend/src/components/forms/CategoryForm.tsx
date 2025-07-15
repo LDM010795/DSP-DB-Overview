@@ -1,3 +1,24 @@
+/**
+ * Category Form Component - DSP Database Overview Frontend
+ *
+ * Formular-Komponente für Kategorien-Verwaltung:
+ * - Create- und Edit-Modi
+ * - Zod-Validierung mit TypeScript
+ * - React Hook Form Integration
+ * - Error-Handling und Loading-States
+ * 
+ * Features:
+ * - Formular-Validierung mit Zod
+ * - TypeScript-Typisierung
+ * - Responsive Design
+ * - Accessibility-Features
+ * - DSP-Branding-Farben
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
+ */
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -5,17 +26,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { learningAPI } from "../../services/learningApi";
 
+// --- Validierungsschema ---
+
 const schema = z.object({
   name: z.string().min(1, "Name erforderlich"),
 });
 
 type FormValues = z.infer<typeof schema>;
 
+// --- Input-Komponente ---
+
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
 }
 
+/**
+ * Input-Komponente mit Label und Error-Handling
+ */
 const Input: React.FC<InputProps> = ({ label, error, ...rest }) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -32,6 +60,8 @@ const Input: React.FC<InputProps> = ({ label, error, ...rest }) => (
   </div>
 );
 
+// --- Hauptkomponente ---
+
 interface CategoryFormProps {
   mode?: "create" | "edit";
   id?: number;
@@ -39,12 +69,19 @@ interface CategoryFormProps {
   onSuccess?: () => void;
 }
 
+/**
+ * Category Form Komponente
+ * 
+ * Formular für die Erstellung und Bearbeitung von Kategorien.
+ * Unterstützt Create- und Edit-Modi mit automatischer Validierung.
+ */
 const CategoryForm: React.FC<CategoryFormProps> = ({
   mode = "create",
   id,
   initialData,
   onSuccess,
 }) => {
+  // --- React Hook Form Setup ---
   const {
     register,
     handleSubmit,
@@ -55,6 +92,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     defaultValues: initialData ?? {},
   });
 
+  // --- Formular-Submit-Handler ---
   const onSubmit = async (data: FormValues) => {
     try {
       if (mode === "edit" && id) {
@@ -73,12 +111,15 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* --- Kategorie-Name Input --- */}
       <Input
         label="Kategorie-Name"
         placeholder="Data Engineering"
         error={errors.name?.message}
         {...register("name")}
       />
+      
+      {/* --- Submit-Button --- */}
       <button
         type="submit"
         disabled={isSubmitting}

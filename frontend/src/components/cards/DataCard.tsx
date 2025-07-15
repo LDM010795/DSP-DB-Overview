@@ -1,5 +1,29 @@
+/**
+ * Data Card Component - DSP Database Overview Frontend
+ *
+ * Allgemeine Datenkarten-Komponente für verschiedene Inhalte:
+ * - Verschiedene Varianten (default, elevated, outlined)
+ * - Verschiedene Padding-Optionen (none, sm, md, lg)
+ * - Collapsible-Funktionalität
+ * - Header mit Icon und Actions
+ * - Flexible Content-Bereiche
+ * 
+ * Features:
+ * - Responsive Design
+ * - Collapsible-Funktionalität
+ * - Flexible Layout-Optionen
+ * - Accessibility-Features
+ * - TypeScript-Typisierung
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
+ */
+
 import React from "react";
 import clsx from "clsx";
+
+// --- Komponenten-Interface ---
 
 interface DataCardProps {
   title: string;
@@ -16,6 +40,12 @@ interface DataCardProps {
   defaultCollapsed?: boolean;
 }
 
+/**
+ * Data Card Komponente
+ * 
+ * Allgemeine Karten-Komponente für verschiedene Arten von Inhalten.
+ * Unterstützt Header, Actions, Collapsible-Funktionalität und flexible Layouts.
+ */
 const DataCard: React.FC<DataCardProps> = ({
   title,
   subtitle,
@@ -30,8 +60,11 @@ const DataCard: React.FC<DataCardProps> = ({
   collapsible = false,
   defaultCollapsed = false,
 }) => {
+  // --- State Management ---
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
 
+  // --- CSS-Klassen-Konfiguration ---
+  
   const baseClasses = "bg-white rounded-lg transition-all duration-200";
 
   const variantClasses = {
@@ -54,6 +87,7 @@ const DataCard: React.FC<DataCardProps> = ({
     lg: "p-6 pt-0",
   };
 
+  // --- Event Handler ---
   const handleToggle = () => {
     if (collapsible) {
       setIsCollapsed(!isCollapsed);
@@ -62,7 +96,7 @@ const DataCard: React.FC<DataCardProps> = ({
 
   return (
     <div className={clsx(baseClasses, variantClasses[variant], className)}>
-      {/* Header */}
+      {/* --- Header-Bereich --- */}
       <div
         className={clsx(
           "flex items-center justify-between",
@@ -72,6 +106,7 @@ const DataCard: React.FC<DataCardProps> = ({
         )}
         onClick={handleToggle}
       >
+        {/* --- Header-Content --- */}
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           {icon && (
             <div className="flex-shrink-0 w-5 h-5 text-gray-500">{icon}</div>
@@ -86,6 +121,7 @@ const DataCard: React.FC<DataCardProps> = ({
           </div>
         </div>
 
+        {/* --- Actions und Collapse-Button --- */}
         <div className="flex items-center space-x-2">
           {actions && (
             <div className="flex items-center space-x-2">{actions}</div>
@@ -116,7 +152,7 @@ const DataCard: React.FC<DataCardProps> = ({
         </div>
       </div>
 
-      {/* Content */}
+      {/* --- Content-Bereich --- */}
       {(!collapsible || !isCollapsed) && (
         <div className={clsx(contentPaddingClasses[padding], contentClassName)}>
           {children}

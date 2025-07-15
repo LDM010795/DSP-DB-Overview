@@ -1,5 +1,29 @@
+/**
+ * Metric Card Component - DSP Database Overview Frontend
+ *
+ * Karten-Komponente für Kennzahlen und Metriken:
+ * - Verschiedene Varianten (default, primary, success, warning, danger)
+ * - Trend-Anzeige mit Prozentangaben
+ * - Icon-Integration
+ * - Verschiedene Größen (sm, md, lg)
+ * - Klickbare Karten
+ * 
+ * Features:
+ * - DSP-Branding-Farben
+ * - Responsive Design
+ * - Trend-Visualisierung
+ * - Accessibility-Features
+ * - TypeScript-Typisierung
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
+ */
+
 import React from "react";
 import clsx from "clsx";
+
+// --- Komponenten-Interface ---
 
 interface MetricCardProps {
   title: string;
@@ -17,6 +41,12 @@ interface MetricCardProps {
   onClick?: () => void;
 }
 
+/**
+ * Metric Card Komponente
+ * 
+ * Zeigt Kennzahlen und Metriken in einer übersichtlichen Karte an.
+ * Unterstützt Trends, Icons und verschiedene Varianten.
+ */
 const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
@@ -28,6 +58,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
   className = "",
   onClick,
 }) => {
+  // --- CSS-Klassen-Konfiguration ---
+  
   const baseClasses =
     "bg-white rounded-lg border shadow-sm transition-all duration-200";
 
@@ -53,6 +85,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
     danger: "text-red-600",
   };
 
+  // --- Komponenten-Typ bestimmen ---
   const Component = onClick ? "button" : "div";
 
   return (
@@ -68,6 +101,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
+          {/* --- Header mit Icon --- */}
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-gray-600">{title}</p>
             {icon && (
@@ -77,6 +111,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
             )}
           </div>
 
+          {/* --- Wert und Trend --- */}
           <div className="flex items-baseline space-x-2">
             <p className="text-2xl font-bold text-gray-900">{value}</p>
             {trend && (
@@ -92,6 +127,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
             )}
           </div>
 
+          {/* --- Beschreibung --- */}
           {description && (
             <p className="mt-2 text-sm text-gray-500">{description}</p>
           )}

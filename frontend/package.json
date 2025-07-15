@@ -1,8 +1,21 @@
 {
-  "name": "frontend",
+  "name": "dsp-db-overview-frontend",
+  "description": "DSP Database Overview Frontend - Enterprise Database Analysis and Management Interface",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "keywords": [
+    "dsp",
+    "database",
+    "overview",
+    "analysis",
+    "management",
+    "react",
+    "typescript",
+    "enterprise"
+  ],
+  "author": "DSP Development Team",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

@@ -1,5 +1,29 @@
+/**
+ * Secondary Button Component - DSP Database Overview Frontend
+ *
+ * Sekundäre Button-Komponente für weniger wichtige Aktionen:
+ * - Ghost, Outline und Subtle-Varianten
+ * - Verschiedene Größen (sm, md, lg)
+ * - Icon-Integration (links/rechts)
+ * - Icon-only Support
+ * - Loading-States mit Spinner
+ * 
+ * Features:
+ * - Neutrale Farbgebung für sekundäre Aktionen
+ * - Icon-only Button Support
+ * - Responsive Design
+ * - Accessibility-Features
+ * - TypeScript-Typisierung
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
+ */
+
 import React from "react";
 import clsx from "clsx";
+
+// --- Komponenten-Interface ---
 
 interface ButtonSecondaryProps {
   children?: React.ReactNode;
@@ -15,6 +39,12 @@ interface ButtonSecondaryProps {
   ariaLabel?: string;
 }
 
+/**
+ * Secondary Button Komponente
+ * 
+ * Sekundärer Button für weniger wichtige Aktionen wie Cancel,
+ * Edit, Delete etc. Unterstützt auch Icon-only Buttons.
+ */
 const ButtonSecondary: React.FC<ButtonSecondaryProps> = ({
   children,
   onClick,
@@ -28,6 +58,8 @@ const ButtonSecondary: React.FC<ButtonSecondaryProps> = ({
   type = "button",
   ariaLabel,
 }) => {
+  // --- CSS-Klassen-Konfiguration ---
+  
   const baseClasses =
     "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300";
 
@@ -51,7 +83,7 @@ const ButtonSecondary: React.FC<ButtonSecondaryProps> = ({
     lg: "w-6 h-6",
   };
 
-  // Icon-only buttons need different padding
+  // --- Icon-only Button Konfiguration ---
   const isIconOnly = !children;
   const iconOnlyPadding = {
     sm: "p-1.5",
@@ -73,9 +105,11 @@ const ButtonSecondary: React.FC<ButtonSecondaryProps> = ({
         className
       )}
     >
+      {/* --- Loading Spinner --- */}
       {loading ? (
         <div className="animate-spin rounded-full border-2 border-gray-400 border-t-transparent w-5 h-5 mr-2" />
       ) : (
+        /* --- Left Icon --- */
         icon &&
         iconPosition === "left" && (
           <span className={clsx(iconClasses[size], children && "mr-2")}>
@@ -84,8 +118,10 @@ const ButtonSecondary: React.FC<ButtonSecondaryProps> = ({
         )
       )}
 
+      {/* --- Button Content --- */}
       {children}
 
+      {/* --- Right Icon --- */}
       {!loading && icon && iconPosition === "right" && (
         <span className={clsx(iconClasses[size], children && "ml-2")}>
           {icon}

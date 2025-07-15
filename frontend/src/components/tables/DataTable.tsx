@@ -1,6 +1,30 @@
+/**
+ * Data Table Component - DSP Database Overview Frontend
+ *
+ * Haupt-Tabellen-Komponente für Datenvisualisierung:
+ * - Sortierbare Spalten mit visuellen Indikatoren
+ * - Verschiedene Styling-Optionen (bordered, striped, hover)
+ * - Loading- und Empty-States
+ * - Sticky Header für große Tabellen
+ * - Responsive Design mit horizontalem Scroll
+ * 
+ * Features:
+ * - TypeScript-Generics für typsichere Daten
+ * - Custom Render-Funktionen für Spalten
+ * - Flexible Styling-Optionen
+ * - Accessibility-Features
+ * - Performance-optimiert
+ * 
+ * Author: DSP Development Team
+ * Created: 10.07.2025
+ * Version: 1.0.0
+ */
+
 import React from "react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp } from "lucide-react";
+
+// --- Typen-Definitionen ---
 
 export interface TableColumn<T = any> {
   key: string;
@@ -37,6 +61,12 @@ interface DataTableProps<T = any> {
   compact?: boolean;
 }
 
+/**
+ * Data Table Komponente
+ * 
+ * Haupt-Tabellen-Komponente für die Anzeige von Daten mit
+ * erweiterten Funktionen wie Sortierung, Styling und Responsive Design.
+ */
 const DataTable = <T extends Record<string, any>>({
   columns,
   data,
@@ -54,12 +84,16 @@ const DataTable = <T extends Record<string, any>>({
   hover = true,
   compact = false,
 }: DataTableProps<T>) => {
+  // --- Event Handler ---
+  
   const handleSort = (key: string) => {
     if (onSort) {
       onSort(key);
     }
   };
 
+  // --- Helper-Funktionen ---
+  
   const getSortIcon = (columnKey: string) => {
     if (!sortConfig || sortConfig.key !== columnKey) {
       return null;
@@ -93,6 +127,7 @@ const DataTable = <T extends Record<string, any>>({
     >
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
+          {/* --- Tabellen-Header --- */}
           <thead
             className={clsx(
               "bg-gray-50",
@@ -133,9 +168,12 @@ const DataTable = <T extends Record<string, any>>({
               ))}
             </tr>
           </thead>
+          
+          {/* --- Tabellen-Body --- */}
           <tbody
             className={clsx("bg-white divide-y divide-gray-200", bodyClassName)}
           >
+            {/* --- Loading State --- */}
             {loading ? (
               <tr>
                 <td colSpan={columns.length} className="px-6 py-12 text-center">
@@ -145,7 +183,9 @@ const DataTable = <T extends Record<string, any>>({
                   </div>
                 </td>
               </tr>
-            ) : data.length === 0 ? (
+            ) : 
+            /* --- Empty State --- */
+            data.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
@@ -155,6 +195,7 @@ const DataTable = <T extends Record<string, any>>({
                 </td>
               </tr>
             ) : (
+              /* --- Daten-Zeilen --- */
               data.map((row, rowIndex) => (
                 <tr key={rowIndex} className={getRowClassName(row, rowIndex)}>
                   {columns.map((column) => (
