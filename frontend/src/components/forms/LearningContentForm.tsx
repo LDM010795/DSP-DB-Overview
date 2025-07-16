@@ -134,7 +134,7 @@ const LearningContentForm: React.FC = () => {
       if (data.contentType === "module") {
         await learningAPI.createModule({
           title: data.title,
-          category: data.category,
+          category_id: parseInt(data.category),
           is_public: data.is_public,
         });
       } else if (data.contentType === "video") {
@@ -179,13 +179,13 @@ const LearningContentForm: React.FC = () => {
           <Input
             label="Titel"
             placeholder="Python Basics"
-            error={errors.title?.message as string | undefined}
+            error={(errors as any)?.title?.message}
             {...register("title")}
           />
           <Input
             label="Kategorie"
             placeholder="Python"
-            error={errors.category?.message as string | undefined}
+            error={(errors as any)?.category?.message}
             {...register("category")}
           />
           <div className="mb-4 flex items-center space-x-2">
@@ -202,25 +202,25 @@ const LearningContentForm: React.FC = () => {
           <Input
             label="Modul-ID"
             placeholder="1"
-            error={errors.moduleId?.message as string | undefined}
+            error={(errors as any)?.moduleId?.message}
             {...register("moduleId")}
           />
           <Input
             label="Titel"
             placeholder="Einführungsvideo"
-            error={errors.title?.message as string | undefined}
+            error={(errors as any)?.title?.message}
             {...register("title")}
           />
           <TextArea
             label="Beschreibung"
             placeholder="Kurze Beschreibung..."
-            error={errors.description?.message as string | undefined}
+            error={(errors as any)?.description?.message}
             {...register("description")}
           />
           <Input
             label="Video URL"
             placeholder="https://..."
-            error={errors.video_url?.message as string | undefined}
+            error={(errors as any)?.video_url?.message}
             {...register("video_url")}
           />
         </>
@@ -231,19 +231,19 @@ const LearningContentForm: React.FC = () => {
           <Input
             label="Content-ID"
             placeholder="10"
-            error={errors.contentId?.message as string | undefined}
+            error={(errors as any)?.contentId?.message}
             {...register("contentId")}
           />
           <Input
             label="Label"
             placeholder="Github Repo"
-            error={errors.label?.message as string | undefined}
+            error={(errors as any)?.label?.message}
             {...register("label")}
           />
           <Input
             label="URL"
             placeholder="https://..."
-            error={errors.url?.message as string | undefined}
+            error={(errors as any)?.url?.message}
             {...register("url")}
           />
         </>

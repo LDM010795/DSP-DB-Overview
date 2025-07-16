@@ -22,7 +22,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { authService } from "../services/authService";
 
 interface ProtectedRouteProps {
-  children: JSX.Element;
+  children: React.ReactElement;
 }
 
 /**

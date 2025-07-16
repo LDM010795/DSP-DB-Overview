@@ -19,6 +19,9 @@ import type { DragEndEvent } from "@dnd-kit/core";
 interface Item {
   id: number;
   title: string;
+  description?: string;
+  video_url?: string;
+  url?: string;
 }
 
 interface SortableListProps {
@@ -27,8 +30,19 @@ interface SortableListProps {
   onEdit?: (item: Item) => void;
 }
 
-const SortableItem: React.FC<{item: Item; order: number; onEdit?: (item: Item)=>void}> = ({item, order, onEdit}) => {
-  const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({id: item.id});
+const SortableItem: React.FC<{
+  item: Item;
+  order: number;
+  onEdit?: (item: Item) => void;
+}> = ({ item, order, onEdit }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -49,17 +63,26 @@ const SortableItem: React.FC<{item: Item; order: number; onEdit?: (item: Item)=>
       {onEdit && (
         <button
           className="text-sm text-gray-600 hover:text-gray-900"
-          onClick={(e)=>{e.stopPropagation(); onEdit(item);}}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(item);
+          }}
           aria-label="Bearbeiten"
-        >✏️</button>
+        >
+          ✏️
+        </button>
       )}
     </div>
   );
 };
 
-const SortableList: React.FC<SortableListProps> = ({items, onOrderChange, onEdit}) => {
+const SortableList: React.FC<SortableListProps> = ({
+  items,
+  onOrderChange,
+  onEdit,
+}) => {
   const sensors = useSensors(
-    useSensor(MouseSensor, {activationConstraint: {distance:5}}),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor)
   );
 
@@ -85,7 +108,7 @@ const SortableList: React.FC<SortableListProps> = ({items, onOrderChange, onEdit
         strategy={verticalListSortingStrategy}
       >
         {items.map((it, idx) => (
-          <SortableItem key={it.id} item={it} order={idx+1} onEdit={onEdit} />
+          <SortableItem key={it.id} item={it} order={idx + 1} onEdit={onEdit} />
         ))}
       </SortableContext>
     </DndContext>
