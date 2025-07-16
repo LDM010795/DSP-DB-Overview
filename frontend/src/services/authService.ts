@@ -6,13 +6,13 @@
  * - Login/Logout-Funktionalität
  * - Token-Speicherung und -Validierung
  * - Integration mit dem E-Learning-Backend
- * 
+ *
  * Features:
  * - Sichere Token-Verwaltung
  * - Automatische Token-Validierung
  * - Integration mit localStorage
  * - Fehlerbehandlung für Authentifizierungsfehler
- * 
+ *
  * Author: DSP Development Team
  * Created: 10.07.2025
  * Version: 1.0.0
@@ -22,7 +22,9 @@ import axios from "axios";
 
 // --- Konfiguration ---
 
-const BASE_URL = "http://localhost:8000/api/elearning";
+const BASE_URL =
+  import.meta.env.VITE_BACKEND_URL ||
+  "https://dsp-backend-0nnw.onrender.com/api";
 
 // --- Typen ---
 
@@ -46,22 +48,25 @@ export interface LoginCredentials {
 export const authService = {
   /**
    * Benutzer anmelden und JWT-Token erhalten
-   * 
+   *
    * @param username - Benutzername
    * @param password - Passwort
    * @returns Promise mit Token-Response
    */
   async login(username: string, password: string): Promise<TokenResponse> {
     try {
-      const res = await axios.post<TokenResponse>(`${BASE_URL}/token/`, {
-        username,
-        password,
-      });
-      
+      const res = await axios.post<TokenResponse>(
+        `${BASE_URL}/elearning/token/`,
+        {
+          username,
+          password,
+        }
+      );
+
       // Token im localStorage speichern
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
-      
+
       return res.data;
     } catch (error) {
       console.error("Login error:", error);
@@ -80,7 +85,7 @@ export const authService = {
 
   /**
    * Prüfen ob Benutzer authentifiziert ist
-   * 
+   *
    * @returns true wenn Token vorhanden, false sonst
    */
   isAuthenticated(): boolean {
@@ -89,7 +94,7 @@ export const authService = {
 
   /**
    * Aktuellen Access-Token abrufen
-   * 
+   *
    * @returns Access-Token oder null
    */
   getAccessToken(): string | null {
@@ -98,10 +103,10 @@ export const authService = {
 
   /**
    * Refresh-Token abrufen
-   * 
+   *
    * @returns Refresh-Token oder null
    */
   getRefreshToken(): string | null {
     return localStorage.getItem("refresh");
   },
-}; 
+};
