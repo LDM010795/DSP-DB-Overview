@@ -156,7 +156,7 @@ export const dbOverviewAPI = {
    * Diese Funktion ist das Herzstück der Anwendung
    */
   async getDatabaseSchema(): Promise<DatabaseSchemaResponse> {
-    const response = await api.get("/api/schema/");
+    const response = await api.get("/schema/");
     return response.data;
   },
 
@@ -170,7 +170,7 @@ export const dbOverviewAPI = {
     page: number = 1,
     pageSize: number = 20
   ): Promise<TableDataResponse> {
-    const response = await api.get(`/api/table/${appLabel}/${modelName}/`, {
+    const response = await api.get(`/table/${appLabel}/${modelName}/`, {
       params: { page, page_size: pageSize },
     });
     return response.data;
@@ -181,7 +181,7 @@ export const dbOverviewAPI = {
    * Für Performance-Analysen und Optimierung
    */
   async getDatabaseStatistics(): Promise<DatabaseStatistics> {
-    const response = await api.get("/api/statistics/");
+    const response = await api.get("/statistics/");
     return response.data;
   },
 };
