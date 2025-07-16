@@ -8,7 +8,7 @@
 
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8000/api/db-overview";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://dsp-backend-0nnw.onrender.com/api";
 
 // Axios-Instance mit Standardkonfiguration
 const api = axios.create({
