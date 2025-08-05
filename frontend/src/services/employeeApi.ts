@@ -6,13 +6,13 @@
  * - Positions (Positionen/Rollen) - CRUD-Operationen
  * - Employees (Mitarbeiter) - CRUD-Operationen
  * - Tool Access Management - Berechtigungsverwaltung
- * 
+ *
  * Features:
  * - Vollständige CRUD-Operationen für alle Entitäten
  * - JWT-basierte Authentifizierung
  * - Automatische Fehlerbehandlung
  * - TypeScript-Typisierung für alle API-Responses
- * 
+ *
  * Author: DSP Development Team
  * Created: 10.07.2025
  * Version: 1.0.0
@@ -22,7 +22,8 @@ import axios from "axios";
 
 // --- API-Konfiguration ---
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://dsp-backend-0nnw.onrender.com/api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8000/api/employees";
 
 // Axios-Instance mit Standardkonfiguration
 const employeeApi = axios.create({
@@ -143,14 +144,14 @@ export interface EmployeeCreate {
 
 export const employeeAPI = {
   // --- Department CRUD-Operationen ---
-  
+
   async getDepartments(): Promise<Department[]> {
-    const response = await employeeApi.get("/employees/departments/");
+    const response = await employeeApi.get("/departments/");
     return response.data;
   },
 
   async createDepartment(data: DepartmentCreate): Promise<Department> {
-    const response = await employeeApi.post("/employees/departments/", data);
+    const response = await employeeApi.post("/departments/", data);
     return response.data;
   },
 
@@ -158,26 +159,23 @@ export const employeeAPI = {
     id: number,
     data: Partial<DepartmentCreate>
   ): Promise<Department> {
-    const response = await employeeApi.patch(
-      `/employees/departments/${id}/`,
-      data
-    );
+    const response = await employeeApi.patch(`/departments/${id}/`, data);
     return response.data;
   },
 
   async deleteDepartment(id: number): Promise<void> {
-    await employeeApi.delete(`/employees/departments/${id}/`);
+    await employeeApi.delete(`/departments/${id}/`);
   },
 
   // --- Position CRUD-Operationen ---
-  
+
   async getPositions(): Promise<Position[]> {
-    const response = await employeeApi.get("/employees/positions/");
+    const response = await employeeApi.get("/positions/");
     return response.data;
   },
 
   async createPosition(data: PositionCreate): Promise<Position> {
-    const response = await employeeApi.post("/employees/positions/", data);
+    const response = await employeeApi.post("/positions/", data);
     return response.data;
   },
 
@@ -185,26 +183,23 @@ export const employeeAPI = {
     id: number,
     data: Partial<PositionCreate>
   ): Promise<Position> {
-    const response = await employeeApi.patch(
-      `/employees/positions/${id}/`,
-      data
-    );
+    const response = await employeeApi.patch(`/positions/${id}/`, data);
     return response.data;
   },
 
   async deletePosition(id: number): Promise<void> {
-    await employeeApi.delete(`/employees/positions/${id}/`);
+    await employeeApi.delete(`/positions/${id}/`);
   },
 
   // --- Employee CRUD-Operationen ---
-  
+
   async getEmployees(): Promise<Employee[]> {
-    const response = await employeeApi.get("/employees/employees/");
+    const response = await employeeApi.get("/employees/");
     return response.data;
   },
 
   async createEmployee(data: EmployeeCreate): Promise<Employee> {
-    const response = await employeeApi.post("/employees/employees/", data);
+    const response = await employeeApi.post("/employees/", data);
     return response.data;
   },
 
@@ -212,54 +207,49 @@ export const employeeAPI = {
     id: number,
     data: Partial<EmployeeCreate>
   ): Promise<Employee> {
-    const response = await employeeApi.patch(
-      `/employees/employees/${id}/`,
-      data
-    );
+    const response = await employeeApi.patch(`/employees/${id}/`, data);
     return response.data;
   },
 
   async deleteEmployee(id: number): Promise<void> {
-    await employeeApi.delete(`/employees/employees/${id}/`);
+    await employeeApi.delete(`/employees/${id}/`);
   },
 
   // Tool APIs
   async getTools(): Promise<Tool[]> {
-    const res = await employeeApi.get("/employees/tools/");
+    const res = await employeeApi.get("/tools/");
     return res.data;
   },
 
   async createTool(data: ToolCreate): Promise<Tool> {
-    const res = await employeeApi.post("/employees/tools/", data);
+    const res = await employeeApi.post("/tools/", data);
     return res.data;
   },
 
   async updateTool(id: number, data: ToolUpdate): Promise<Tool> {
-    const res = await employeeApi.patch(`/employees/tools/${id}/`, data);
+    const res = await employeeApi.patch(`/tools/${id}/`, data);
     return res.data;
   },
 
   async getToolAccess(employeeId: number): Promise<ToolAccess[]> {
-    const res = await employeeApi.get(
-      `/employees/tool-access/?employee=${employeeId}`
-    );
+    const res = await employeeApi.get(`/tool-access/?employee=${employeeId}`);
     return res.data;
   },
   async grantToolAccess(
     employee: number,
     tool_id: number
   ): Promise<ToolAccess> {
-    const res = await employeeApi.post(`/employees/tool-access/`, {
+    const res = await employeeApi.post(`/tool-access/`, {
       employee,
       tool_id,
     });
     return res.data;
   },
   async revokeToolAccess(accessId: number): Promise<void> {
-    await employeeApi.delete(`/employees/tool-access/${accessId}/`);
+    await employeeApi.delete(`/tool-access/${accessId}/`);
   },
   async getToolAccessForTool(toolId: number): Promise<ToolAccess[]> {
-    const res = await employeeApi.get(`/employees/tool-access/?tool=${toolId}`);
+    const res = await employeeApi.get(`/tool-access/?tool=${toolId}`);
     return res.data;
   },
 };

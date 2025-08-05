@@ -23,8 +23,7 @@ import axios from "axios";
 // --- Konfiguration ---
 
 const BASE_URL =
-  import.meta.env.VITE_BACKEND_URL ||
-  "https://dsp-backend-0nnw.onrender.com/api";
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:8000/api";
 
 // --- Typen ---
 

@@ -24,8 +24,7 @@ import axios from "axios";
 // --- API-Konfiguration ---
 
 const API_BASE_URL =
-  import.meta.env.VITE_BACKEND_URL ||
-  "https://dsp-backend-0nnw.onrender.com/api";
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:8000/api";
 
 const learningApi = axios.create({
   baseURL: API_BASE_URL,
