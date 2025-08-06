@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -109,7 +109,6 @@ const Select: React.FC<SelectProps> = ({
   </div>
 );
 
-// ---------------- Hauptkomponente -------------------------------------
 interface VideoFormProps {
   mode?: "create" | "edit";
   id?: number;
@@ -128,7 +127,6 @@ const VideoForm: React.FC<VideoFormProps> = ({
   initialData,
   onSuccess,
 }) => {
-  // Modul-Liste laden
   const { data: modulesData } = useQuery({
     queryKey: ["modules-accessible"],
     queryFn: async () => {
@@ -137,13 +135,15 @@ const VideoForm: React.FC<VideoFormProps> = ({
     },
   });
 
+  const [pendingVideos, setPendingVideos] = useState<FormValues[]>([]);
+  const [isSavingAll, setIsSavingAll] = useState(false);
+
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
     reset,
-    setValue,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initialData ?? {},
@@ -151,119 +151,199 @@ const VideoForm: React.FC<VideoFormProps> = ({
 
   const selectedModuleId = watch("moduleId");
 
-  // Reihenfolge berechnen, wenn Modul gewählt wird
+  // Reset pending videos when module changes
   useEffect(() => {
-    if (!selectedModuleId) return;
-    (async () => {
-      try {
-        const res = await learningAPI.getModule(selectedModuleId);
-        const contents = res.data.contents ?? [];
-        const nextOrder = (contents.length ?? 0) + 1;
-        (
-          document.getElementById("orderInfo") as HTMLSpanElement | null
-        )?.setAttribute("data-order", nextOrder.toString());
-      } catch (err) {
-        console.error(err);
-      }
-    })();
+    if (selectedModuleId) {
+      setPendingVideos([]);
+    }
   }, [selectedModuleId]);
 
-  const onSubmit = async (data: FormValues) => {
+  const handleAddVideo = (data: FormValues) => {
+    if (data.moduleId && data.title && data.video_url) {
+      setPendingVideos((prev) => [...prev, { ...data }]);
+      reset({
+        moduleId: data.moduleId, // Keep module selected
+        title: "",
+        description: "",
+        video_url: "",
+      });
+    }
+  };
+
+  const handleRemoveVideo = (index: number) => {
+    setPendingVideos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveAll = async () => {
+    if (pendingVideos.length === 0) return;
+
+    setIsSavingAll(true);
     try {
-      // Hole aktuelle Videos des Moduls, um Reihenfolge zu bestimmen
-      const detailRes = await learningAPI.getModule(data.moduleId);
-      const contents = detailRes.data.contents ?? [];
-      const order = (contents.length ?? 0) + 1;
+      for (const video of pendingVideos) {
+        const payloadCreate = {
+          module: Number(video.moduleId),
+          title: video.title,
+          description: video.description,
+          video_url: video.video_url,
+        } as const;
 
-      const payloadCreate = {
-        module: Number(data.moduleId),
-        title: data.title,
-        description: data.description,
-        video_url: data.video_url,
-      } as const;
-
-      const payloadUpdate = {
-        title: data.title,
-        description: data.description,
-        video_url: data.video_url,
-      } as const;
-
-      let updated;
-      if (mode === "edit" && id) {
-        const res = await learningAPI.updateVideo(id, payloadUpdate as any);
-        updated = res.data;
-        console.log("Video aktualisiert");
-      } else {
         await learningAPI.createVideo(payloadCreate as any);
-        console.log(`Video gespeichert (Reihenfolge ${order})`);
-        reset();
       }
-      onSuccess?.(updated);
+
+      console.log(`${pendingVideos.length} Videos gespeichert`);
+      setPendingVideos([]);
+      reset();
     } catch (e: unknown) {
-      if (e instanceof Error) alert("Fehler: " + e.message);
+      if (e instanceof Error) alert("Fehler beim Speichern: " + e.message);
+    } finally {
+      setIsSavingAll(false);
+    }
+  };
+
+  const onSubmit = async (data: FormValues) => {
+    if (mode === "edit" && id) {
+      // Edit mode - save single video
+      try {
+        const payloadUpdate = {
+          title: data.title,
+          description: data.description,
+          video_url: data.video_url,
+        } as const;
+
+        const res = await learningAPI.updateVideo(id, payloadUpdate as any);
+        console.log("Video aktualisiert");
+        onSuccess?.(res.data);
+      } catch (e: unknown) {
+        if (e instanceof Error) alert("Fehler: " + e.message);
+      }
+    } else {
+      // Create mode - add to pending list
+      handleAddVideo(data);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <Select
-        label="Modul-Auswahl"
-        groups={(() => {
-          const pub = modulesData?.filter((m) => m.is_public) ?? [];
-          const priv = modulesData?.filter((m) => !m.is_public) ?? [];
-          return [
-            {
-              label: "Öffentlich",
-              options: pub.map((m) => ({
-                value: m.id.toString(),
-                label: m.title,
-              })),
-            },
-            {
-              label: "Nicht öffentlich",
-              options: priv.map((m) => ({
-                value: m.id.toString(),
-                label: m.title,
-              })),
-            },
-          ];
-        })()}
-        error={errors.moduleId?.message}
-        {...register("moduleId")}
-      />
-      <Input
-        label="Video-Titel"
-        placeholder="Einführung"
-        error={errors.title?.message}
-        {...register("title")}
-      />
-      <TextArea
-        label="Beschreibung"
-        placeholder="Kurze Beschreibung..."
-        error={errors.description?.message}
-        {...register("description")}
-      />
-      <Input
-        label="Video-URL"
-        placeholder="https://..."
-        error={errors.video_url?.message}
-        {...register("video_url")}
-      />
-      {/* Order Info */}
-      {selectedModuleId && (
-        <p className="text-xs text-gray-500">
-          Automatische Reihenfolge wird berechnet …
-        </p>
+    <div className="space-y-6">
+      {/* Pending Videos List */}
+      {pendingVideos.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">
+            Videos zum Speichern ({pendingVideos.length})
+          </h3>
+          <div className="space-y-2">
+            {pendingVideos.map((video, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between bg-white p-3 rounded border"
+              >
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{video.title}</p>
+                  <p className="text-sm text-gray-600">{video.video_url}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveVideo(index)}
+                  className="ml-2 text-red-600 hover:text-red-800"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex space-x-3">
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              disabled={isSavingAll}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md disabled:opacity-50"
+            >
+              {isSavingAll
+                ? "Speichern..."
+                : `Alle ${pendingVideos.length} Videos speichern`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingVideos([])}
+              className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium rounded-md"
+            >
+              Liste leeren
+            </button>
+          </div>
+        </div>
       )}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full inline-flex items-center justify-center px-4 py-2 bg-[#ff863d] hover:bg-[#ed7c34] transition-colors text-white font-semibold rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff863d] disabled:opacity-50"
-      >
-        {isSubmitting ? "Speichern..." : "Speichern"}
-      </button>
-    </form>
+      {/* Video Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Select
+          label="Modul-Auswahl"
+          groups={(() => {
+            const pub = modulesData?.filter((m) => m.is_public) ?? [];
+            const priv = modulesData?.filter((m) => !m.is_public) ?? [];
+            return [
+              {
+                label: "Öffentlich",
+                options: pub.map((m) => ({
+                  value: m.id.toString(),
+                  label: m.title,
+                })),
+              },
+              {
+                label: "Nicht öffentlich",
+                options: priv.map((m) => ({
+                  value: m.id.toString(),
+                  label: m.title,
+                })),
+              },
+            ];
+          })()}
+          error={errors.moduleId?.message}
+          {...register("moduleId")}
+        />
+        <Input
+          label="Video-Titel"
+          placeholder="Einführung"
+          error={errors.title?.message}
+          {...register("title")}
+        />
+        <TextArea
+          label="Beschreibung"
+          placeholder="Kurze Beschreibung..."
+          error={errors.description?.message}
+          {...register("description")}
+        />
+        <Input
+          label="Video-URL"
+          placeholder="https://..."
+          error={errors.video_url?.message}
+          {...register("video_url")}
+        />
+
+        <div className="flex space-x-3">
+          <button
+            type="submit"
+            disabled={isSubmitting || mode === "edit"}
+            className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-[#ff863d] hover:bg-[#ed7c34] transition-colors text-white font-semibold rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff863d] disabled:opacity-50"
+          >
+            {isSubmitting
+              ? "Hinzufügen..."
+              : mode === "edit"
+              ? "Aktualisieren"
+              : "Video hinzufügen"}
+          </button>
+
+          {mode !== "edit" && pendingVideos.length > 0 && (
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              disabled={isSavingAll}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md disabled:opacity-50"
+            >
+              {isSavingAll ? "Speichern..." : "Alle speichern"}
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 };
 

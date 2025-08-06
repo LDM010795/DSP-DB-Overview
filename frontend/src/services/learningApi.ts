@@ -87,6 +87,13 @@ export interface VideoPayload {
   video_url: string;
 }
 
+export interface ContentPayload {
+  moduleId: string;
+  title: string;
+  description?: string;
+  url: string;
+}
+
 export interface ResourcePayload {
   contentId: string;
   label: string;
@@ -97,6 +104,15 @@ export interface ArticlePayload {
   moduleId: string;
   title: string;
   url: string;
+}
+
+export interface ArticleFromCloudPayload {
+  moduleId: string;
+  cloudUrl: string;
+}
+
+export interface CategoryPayload {
+  name: string;
 }
 
 // --- Learning API Service ---
@@ -127,54 +143,84 @@ export const learningAPI = {
   getModulesAll: () => learningApi.get("/elearning/modules/"),
 
   /**
-   * Modul-Details abrufen (öffentlich)
-   */
-  getModuleDetail: (id: string | number) =>
-    learningApi.get(`/elearning/modules/public/${id}/`),
-
-  /**
-   * Modul-Details abrufen (Admin)
+   * Modul-Details abrufen
    */
   getModule: (id: string | number) =>
-    learningApi.get(`/elearning/modules/${id}/detail/`),
-
-  // --- Content-Management ---
+    learningApi.get(`/elearning/modules/${id}/`),
 
   /**
-   * Video-Content erstellen
+   * Modul löschen
+   */
+  deleteModule: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/${id}/`),
+
+  // --- Content CRUD-Operationen ---
+
+  /**
+   * Neuen Content erstellen
+   */
+  createContent: (data: ContentPayload) =>
+    learningApi.post("/elearning/modules/content/", data),
+
+  /**
+   * Content aktualisieren
+   */
+  updateContent: (id: string | number, data: ContentPayload) =>
+    learningApi.put(`/elearning/modules/content/${id}/`, data),
+
+  /**
+   * Content löschen
+   */
+  deleteContent: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/content/${id}/`),
+
+  // --- Video CRUD-Operationen ---
+
+  /**
+   * Neues Video erstellen
    */
   createVideo: (data: VideoPayload) =>
     learningApi.post("/elearning/modules/content/", data),
 
   /**
-   * Video-Content aktualisieren
+   * Video aktualisieren
    */
-  updateVideo: (
-    id: string | number,
-    data: Partial<VideoPayload & { order?: number }>
-  ) => learningApi.patch(`/elearning/modules/content/${id}/`, data),
+  updateVideo: (id: string | number, data: VideoPayload) =>
+    learningApi.put(`/elearning/modules/content/${id}/`, data),
 
   /**
-   * Ergänzende Ressource erstellen
+   * Video löschen
    */
-  createResource: (data: ResourcePayload) =>
-    learningApi.post("/elearning/modules/supplementary/", data),
+  deleteVideo: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/content/${id}/`),
+
+  // --- Article CRUD-Operationen ---
 
   /**
-   * Artikel erstellen
+   * Neuen Artikel erstellen
    */
   createArticle: (data: ArticlePayload) =>
     learningApi.post("/elearning/modules/article/", data),
 
   /**
+   * Artikel aus Cloud Storage erstellen
+   */
+  createArticleFromCloud: (data: ArticleFromCloudPayload) =>
+    learningApi.post("/elearning/modules/content/process-article/", data),
+
+  /**
    * Artikel aktualisieren
    */
-  updateArticle: (
-    id: string | number,
-    data: Partial<ArticlePayload & { order?: number }>
-  ) => learningApi.patch(`/elearning/modules/article/${id}/`, data),
+  updateArticle: (id: string | number, data: ArticlePayload) =>
+    learningApi.put(`/elearning/modules/article/${id}/`, data),
 
-  // --- Kategorien-Management ---
+  /**
+   * Artikel löschen
+   */
+  deleteArticle: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/article/${id}/`),
+
+  // --- Category CRUD-Operationen ---
 
   /**
    * Alle Kategorien abrufen
@@ -184,14 +230,27 @@ export const learningAPI = {
   /**
    * Neue Kategorie erstellen
    */
-  createCategory: (data: { name: string }) =>
+  createCategory: (data: CategoryPayload) =>
     learningApi.post("/elearning/modules/categories/", data),
 
   /**
    * Kategorie aktualisieren
    */
-  updateCategory: (id: string | number, data: { name: string }) =>
-    learningApi.patch(`/elearning/modules/categories/${id}/`, data),
+  updateCategory: (id: string | number, data: CategoryPayload) =>
+    learningApi.put(`/elearning/modules/categories/${id}/`, data),
+
+  /**
+   * Kategorie löschen
+   */
+  deleteCategory: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/categories/${id}/`),
+
+  // --- Article Management ---
+
+  /**
+   * Alle Artikel abrufen
+   */
+  getArticlesAll: () => learningApi.get("/elearning/modules/article/"),
 };
 
 export default learningApi;

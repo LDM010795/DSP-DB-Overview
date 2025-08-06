@@ -6,14 +6,14 @@
  * - Inhaltsverwaltung und -bearbeitung
  * - Tab-basierte Navigation
  * - Kategorien-Management
- * 
+ *
  * Features:
  * - Create- und Manage-Modi
  * - Tab-basierte Formulare
  * - Kategorien-Verwaltung
  * - Responsive Design
  * - DSP-Branding-Farben
- * 
+ *
  * Author: DSP Development Team
  * Created: 10.07.2025
  * Version: 1.0.0
@@ -30,7 +30,7 @@ import CategoryList from "../components/CategoryList";
 
 /**
  * Learning Management Komponente
- * 
+ *
  * Hauptseite für die Verwaltung der E-Learning-Plattform.
  * Ermöglicht die Erstellung und Verwaltung von Lerninhalten.
  */
@@ -97,7 +97,7 @@ const LearningManagement: React.FC = () => {
               </button>
             ))}
           </div>
-          
+
           {/* --- Tab-Content --- */}
           {tab === "module" && <ModuleForm />}
           {tab === "video" && <VideoForm />}
