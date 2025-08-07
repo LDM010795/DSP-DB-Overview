@@ -28,13 +28,17 @@ interface SortableListProps {
   items: Item[];
   onOrderChange: (items: Item[]) => void;
   onEdit?: (item: Item) => void;
+  onDelete?: (item: Item) => void;
+  groupId?: string; // Optional group ID to restrict drag & drop to same group
 }
 
 const SortableItem: React.FC<{
   item: Item;
   order: number;
   onEdit?: (item: Item) => void;
-}> = ({ item, order, onEdit }) => {
+  onDelete?: (item: Item) => void;
+  groupId?: string;
+}> = ({ item, order, onEdit, onDelete, groupId }) => {
   const {
     attributes,
     listeners,
@@ -53,6 +57,8 @@ const SortableItem: React.FC<{
       ref={setNodeRef}
       style={style}
       className="flex items-center justify-between py-1 cursor-grab hover:bg-gray-100 px-2 rounded"
+      data-group-id={groupId}
+      data-item-id={item.id}
       {...attributes}
       {...listeners}
     >
@@ -60,18 +66,32 @@ const SortableItem: React.FC<{
         <span className="w-6 text-right text-xs text-gray-500">{order}</span>
         <span>{item.title}</span>
       </div>
-      {onEdit && (
-        <button
-          className="text-sm text-gray-600 hover:text-gray-900"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(item);
-          }}
-          aria-label="Bearbeiten"
-        >
-          ✏️
-        </button>
-      )}
+      <div className="flex items-center space-x-1">
+        {onEdit && (
+          <button
+            className="text-sm text-gray-600 hover:text-gray-900"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(item);
+            }}
+            aria-label="Bearbeiten"
+          >
+            ✏️
+          </button>
+        )}
+        {onDelete && (
+          <button
+            className="text-sm text-red-600 hover:text-red-900"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(item);
+            }}
+            aria-label="Löschen"
+          >
+            🗑️
+          </button>
+        )}
+      </div>
     </div>
   );
 };
@@ -80,6 +100,8 @@ const SortableList: React.FC<SortableListProps> = ({
   items,
   onOrderChange,
   onEdit,
+  onDelete,
+  groupId,
 }) => {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -89,6 +111,22 @@ const SortableList: React.FC<SortableListProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+
+    // Ensure drag & drop only works within the same group
+    if (groupId) {
+      const activeElement = document.querySelector(
+        `[data-group-id="${groupId}"][data-item-id="${active.id}"]`
+      );
+      const overElement = document.querySelector(
+        `[data-group-id="${groupId}"][data-item-id="${over.id}"]`
+      );
+
+      if (!activeElement || !overElement) {
+        console.log("Drag & Drop blocked: Items must be in the same chapter");
+        return;
+      }
+    }
+
     const activeId = Number(active.id);
     const overId = Number(over.id);
     const oldIndex = items.findIndex((i) => i.id === activeId);
@@ -108,7 +146,14 @@ const SortableList: React.FC<SortableListProps> = ({
         strategy={verticalListSortingStrategy}
       >
         {items.map((it, idx) => (
-          <SortableItem key={it.id} item={it} order={idx + 1} onEdit={onEdit} />
+          <SortableItem
+            key={it.id}
+            item={it}
+            order={idx + 1}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            groupId={groupId}
+          />
         ))}
       </SortableContext>
     </DndContext>

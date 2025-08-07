@@ -80,11 +80,26 @@ export interface ModulePayload {
   is_public?: boolean;
 }
 
-export interface VideoPayload {
-  moduleId: string;
+export interface ChapterPayload {
+  module_id: number;
   title: string;
   description?: string;
+  order: number;
+  is_active?: boolean;
+}
+
+export interface VideoPayload {
+  chapter: number;
+  description?: string;
   video_url: string;
+  order?: number; // Für Drag & Drop Reordering
+}
+
+export interface VideoUpdatePayload {
+  chapter?: number;
+  description?: string;
+  video_url?: string;
+  order?: number; // Für Drag & Drop Reordering
 }
 
 export interface ContentPayload {
@@ -101,9 +116,10 @@ export interface ResourcePayload {
 }
 
 export interface ArticlePayload {
-  moduleId: string;
+  module_id: number;
   title: string;
   url: string;
+  order?: number;
 }
 
 export interface ArticleFromCloudPayload {
@@ -146,13 +162,39 @@ export const learningAPI = {
    * Modul-Details abrufen
    */
   getModule: (id: string | number) =>
-    learningApi.get(`/elearning/modules/${id}/`),
+    learningApi.get(`/elearning/modules/${id}/detail/`),
 
   /**
    * Modul löschen
    */
   deleteModule: (id: string | number) =>
     learningApi.delete(`/elearning/modules/${id}/`),
+
+  // --- Chapter CRUD-Operationen ---
+
+  /**
+   * Neues Kapitel erstellen
+   */
+  createChapter: (data: ChapterPayload) =>
+    learningApi.post("/elearning/modules/chapters/", data),
+
+  /**
+   * Kapitel aktualisieren
+   */
+  updateChapter: (id: string | number, data: ChapterPayload) =>
+    learningApi.put(`/elearning/modules/chapters/${id}/`, data),
+
+  /**
+   * Kapitel-Details abrufen
+   */
+  getChapter: (id: string | number) =>
+    learningApi.get(`/elearning/modules/chapters/${id}/`),
+
+  /**
+   * Kapitel löschen
+   */
+  deleteChapter: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/chapters/${id}/delete/`),
 
   // --- Content CRUD-Operationen ---
 
@@ -179,13 +221,16 @@ export const learningAPI = {
   /**
    * Neues Video erstellen
    */
-  createVideo: (data: VideoPayload) =>
-    learningApi.post("/elearning/modules/content/", data),
+  createVideo: (data: VideoPayload) => {
+    console.log("📡 [LearningAPI] POST /elearning/modules/content/");
+    console.log("📡 [LearningAPI] createVideo payload:", data);
+    return learningApi.post("/elearning/modules/content/", data);
+  },
 
   /**
    * Video aktualisieren
    */
-  updateVideo: (id: string | number, data: VideoPayload) =>
+  updateVideo: (id: string | number, data: VideoUpdatePayload) =>
     learningApi.put(`/elearning/modules/content/${id}/`, data),
 
   /**
@@ -211,14 +256,25 @@ export const learningAPI = {
   /**
    * Artikel aktualisieren
    */
-  updateArticle: (id: string | number, data: ArticlePayload) =>
-    learningApi.put(`/elearning/modules/article/${id}/`, data),
+  updateArticle: (id: string | number, data: ArticlePayload) => {
+    console.log(`[DEBUG] learningApi.updateArticle() called for id: ${id}`);
+    console.log(`[DEBUG] Data being sent:`, data);
+    return learningApi.put(`/elearning/modules/article/${id}/`, data);
+  },
 
   /**
    * Artikel löschen
    */
   deleteArticle: (id: string | number) =>
     learningApi.delete(`/elearning/modules/article/${id}/`),
+
+  // --- Chapter Management ---
+
+  /**
+   * Kapitel löschen
+   */
+  deleteChapter: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/chapters/${id}/delete/`),
 
   // --- Category CRUD-Operationen ---
 
@@ -244,6 +300,22 @@ export const learningAPI = {
    */
   deleteCategory: (id: string | number) =>
     learningApi.delete(`/elearning/modules/categories/${id}/`),
+
+  // --- Module Management ---
+
+  /**
+   * Modul löschen
+   */
+  deleteModule: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/${id}/`),
+
+  // --- Video Management ---
+
+  /**
+   * Video löschen
+   */
+  deleteVideo: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/content/${id}/`),
 
   // --- Article Management ---
 

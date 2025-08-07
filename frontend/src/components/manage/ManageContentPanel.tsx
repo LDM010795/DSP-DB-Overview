@@ -1,34 +1,54 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { learningAPI } from "../../services/learningApi";
-import { Pencil, ChevronDown, ChevronRight } from "lucide-react";
+import { Pencil, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import EditModal from "./EditModal";
 import ModuleForm from "../forms/ModuleForm";
 import VideoForm from "../forms/VideoForm";
 import ArticleForm from "../forms/ArticleForm";
 import SortableList from "./SortableList";
+import ChapterContentList from "./ChapterContentList";
 import { useEffect } from "react";
 
 interface ModuleDetail {
   id: number;
   title: string;
-  category: string;
+  category: { id: number; name: string };
   is_public: boolean;
-  contents: {
+  chapters?: {
+    id: number;
+    title: string;
+    order: number;
+    contents: {
+      id: number;
+      title: string;
+      description?: string;
+      video_url?: string;
+      order: number;
+    }[];
+  }[];
+  contents?: {
     id: number;
     title: string;
     description?: string;
     video_url?: string;
+    order?: number;
   }[];
   articles: { id: number; title: string; url?: string }[];
 }
 
 const ManageContentPanel: React.FC = () => {
+  const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["modules-all"],
     queryFn: async () => {
       const res = await learningAPI.getModulesAll();
-      return res.data as { id: number; title: string; is_public: boolean }[];
+      return res.data as {
+        id: number;
+        title: string;
+        is_public: boolean;
+        category: { id: number; name: string };
+      }[];
     },
   });
 
@@ -50,12 +70,32 @@ const ManageContentPanel: React.FC = () => {
     enabled: !!expanded,
   });
 
-  const [videoList, setVideoList] = useState<ModuleDetail["contents"]>([]);
+  const [videoList, setVideoList] = useState<
+    {
+      id: number;
+      title: string;
+      description?: string;
+      video_url?: string;
+      order?: number;
+    }[]
+  >([]);
   const [articleList, setArticleList] = useState<ModuleDetail["articles"]>([]);
 
   useEffect(() => {
     if (detailData) {
-      setVideoList(detailData.contents);
+      // Prüfen ob chapters existieren, sonst contents verwenden (Fallback)
+      if (detailData.chapters && detailData.chapters.length > 0) {
+        // Alle Videos aus allen Kapiteln sammeln
+        const allVideos = detailData.chapters.flatMap(
+          (chapter) => chapter.contents
+        );
+        setVideoList(allVideos);
+      } else if (detailData.contents) {
+        // Fallback für alte Struktur
+        setVideoList(detailData.contents);
+      } else {
+        setVideoList([]);
+      }
       setArticleList(detailData.articles);
     }
   }, [detailData]);
@@ -131,20 +171,43 @@ const ManageContentPanel: React.FC = () => {
                   {mod.is_public ? "Öffentlich" : "Privat"}
                 </span>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelected({
-                      type: "module",
-                      id: mod.id,
-                      initialData: { title: mod.title },
-                    });
-                  }}
-                  className="inline-flex items-center px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                  aria-label="Modul bearbeiten"
-                >
-                  <Pencil className="h-4 w-4 mr-1" /> Bearbeiten
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelected({
+                        type: "module",
+                        id: mod.id,
+                        initialData: {
+                          title: mod.title,
+                          category: mod.category?.id?.toString() || "",
+                          is_public: mod.is_public,
+                        },
+                      });
+                    }}
+                    className="inline-flex items-center px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
+                    aria-label="Modul bearbeiten"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" /> Bearbeiten
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (
+                        confirm(
+                          `Möchtest du das Modul "${mod.title}" wirklich löschen?`
+                        )
+                      ) {
+                        learningAPI.deleteModule(mod.id);
+                        refetch();
+                      }
+                    }}
+                    className="inline-flex items-center px-3 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-md"
+                    aria-label="Modul löschen"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" /> Löschen
+                  </button>
+                </div>
               </div>
             </div>
             {/* Details wiederverwenden */}
@@ -155,10 +218,131 @@ const ManageContentPanel: React.FC = () => {
                   <h4 className="font-semibold mb-3 text-gray-700">
                     Lernvideos
                   </h4>
-                  {videoList?.length === 0 && (
-                    <p className="text-sm text-gray-500">Keine Videos.</p>
-                  )}
-                  {videoList && (
+                  {detailData?.chapters && detailData.chapters.length > 0 ? (
+                    <ChapterContentList
+                      chapters={detailData.chapters}
+                      onVideoOrderChange={(chapterId, newList) => {
+                        // Sofort lokalen State aktualisieren für sofortige UI-Feedback
+                        if (detailData?.chapters) {
+                          const updatedChapters = detailData.chapters.map(
+                            (chapter) => {
+                              if (chapter.id === chapterId) {
+                                return {
+                                  ...chapter,
+                                  contents: newList,
+                                };
+                              }
+                              return chapter;
+                            }
+                          );
+
+                          // React Query Cache sofort aktualisieren
+                          queryClient.setQueryData(
+                            ["module-detail", expanded],
+                            {
+                              ...detailData,
+                              chapters: updatedChapters,
+                            }
+                          );
+                        }
+
+                        newList.forEach((item, idx) => {
+                          // Nur order aktualisieren - chapter bleibt unverändert
+                          learningAPI.updateVideo(item.id, {
+                            order: idx + 1,
+                          });
+                        });
+                        // Daten neu laden um die Änderungen anzuzeigen
+                        refetch();
+                      }}
+                      onVideoEdit={(item) =>
+                        setSelected({
+                          type: "video",
+                          id: item.id,
+                          moduleId: mod.id,
+                          initialData: {
+                            title: item.title,
+                            description: item.description,
+                            video_url: item.video_url,
+                            moduleId: mod.id.toString(),
+                          },
+                        })
+                      }
+                      onVideoDelete={(item) => {
+                        if (
+                          confirm(
+                            `Möchtest du das Video "${item.title}" wirklich löschen?`
+                          )
+                        ) {
+                          // Sofort lokalen State aktualisieren für sofortige UI-Feedback
+                          if (detailData?.chapters) {
+                            const updatedChapters = detailData.chapters.map(
+                              (chapter) => {
+                                return {
+                                  ...chapter,
+                                  contents: chapter.contents.filter(
+                                    (content) => content.id !== item.id
+                                  ),
+                                };
+                              }
+                            );
+
+                            // React Query Cache sofort aktualisieren
+                            queryClient.setQueryData(
+                              ["module-detail", expanded],
+                              {
+                                ...detailData,
+                                chapters: updatedChapters,
+                              }
+                            );
+                          }
+
+                          learningAPI.deleteVideo(item.id);
+                          // Refetch data to update UI
+                          refetch();
+                        }
+                      }}
+                      onChapterDelete={(chapter) => {
+                        if (
+                          confirm(
+                            `Möchtest du das Kapitel "${chapter.title}" mit allen Videos wirklich löschen?`
+                          )
+                        ) {
+                          // Sofort lokalen State aktualisieren für sofortige UI-Feedback
+                          if (detailData?.chapters) {
+                            const updatedChapters = detailData.chapters.filter(
+                              (c) => c.id !== chapter.id
+                            );
+
+                            // React Query Cache sofort aktualisieren
+                            queryClient.setQueryData(
+                              ["module-detail", expanded],
+                              {
+                                ...detailData,
+                                chapters: updatedChapters,
+                              }
+                            );
+
+                            // Auch videoList sofort aktualisieren für Fallback-Anzeige
+                            if (updatedChapters.length === 0) {
+                              // Wenn alle Kapitel gelöscht wurden, videoList leeren
+                              setVideoList([]);
+                            } else {
+                              // Ansonsten videoList aus den verbleibenden Kapiteln neu berechnen
+                              const remainingVideos = updatedChapters.flatMap(
+                                (chapter) => chapter.contents
+                              );
+                              setVideoList(remainingVideos);
+                            }
+                          }
+
+                          learningAPI.deleteChapter(chapter.id);
+                          // Refetch data to update UI
+                          refetch();
+                        }
+                      }}
+                    />
+                  ) : videoList && videoList.length > 0 ? (
                     <SortableList
                       items={videoList}
                       onOrderChange={async (newList) => {
@@ -180,7 +364,21 @@ const ManageContentPanel: React.FC = () => {
                           },
                         })
                       }
+                      onDelete={(item) => {
+                        if (
+                          confirm(
+                            `Möchtest du das Video "${item.title}" wirklich löschen?`
+                          )
+                        ) {
+                          learningAPI.deleteVideo(item.id);
+                          setVideoList((prev) =>
+                            prev.filter((v) => v.id !== item.id)
+                          );
+                        }
+                      }}
                     />
+                  ) : (
+                    <p className="text-sm text-gray-500">Keine Videos.</p>
                   )}
                 </div>
                 {/* Articles */}
@@ -197,9 +395,17 @@ const ManageContentPanel: React.FC = () => {
                       onOrderChange={async (newList) => {
                         setArticleList(newList);
                         newList.forEach((item, idx) => {
-                          learningAPI.updateArticle(item.id, {
+                          const payload = {
                             order: idx + 1,
-                          });
+                            title: item.title,
+                            url: item.url,
+                            module_id: mod.id,
+                          };
+                          console.log(
+                            `[DEBUG] Updating article ${item.id} with payload:`,
+                            payload
+                          );
+                          learningAPI.updateArticle(item.id, payload);
                         });
                       }}
                       onEdit={(item) =>
@@ -214,6 +420,18 @@ const ManageContentPanel: React.FC = () => {
                           },
                         })
                       }
+                      onDelete={(item) => {
+                        if (
+                          confirm(
+                            `Möchtest du den Artikel "${item.title}" wirklich löschen?`
+                          )
+                        ) {
+                          learningAPI.deleteArticle(item.id);
+                          setArticleList((prev) =>
+                            prev.filter((a) => a.id !== item.id)
+                          );
+                        }
+                      }}
                     />
                   )}
                 </div>

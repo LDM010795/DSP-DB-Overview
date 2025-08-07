@@ -21,6 +21,7 @@
 
 import React from "react";
 import ModuleForm from "../components/forms/ModuleForm";
+import ChapterForm from "../components/forms/ChapterForm";
 import VideoForm from "../components/forms/VideoForm";
 import ArticleForm from "../components/forms/ArticleForm";
 import CategoryForm from "../components/forms/CategoryForm";
@@ -48,6 +49,7 @@ const LearningManagement: React.FC = () => {
   const tabs = [
     { id: "category", label: "Kategorie anlegen" },
     { id: "module", label: "Modul anlegen" },
+    { id: "chapter", label: "Kapitel anlegen" },
     { id: "video", label: "Lernvideo anlegen" },
     { id: "article", label: "Lernbeitrag anlegen" },
   ];
@@ -100,6 +102,7 @@ const LearningManagement: React.FC = () => {
 
           {/* --- Tab-Content --- */}
           {tab === "module" && <ModuleForm />}
+          {tab === "chapter" && <ChapterForm />}
           {tab === "video" && <VideoForm />}
           {tab === "article" && <ArticleForm />}
           {tab === "category" && (

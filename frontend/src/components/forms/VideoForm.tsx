@@ -9,9 +9,9 @@ import { learningAPI } from "../../services/learningApi";
 // ---------------- Schema ---------------------------------------------
 const schema = z.object({
   moduleId: z.string().min(1, "Modul wählen"),
-  title: z.string().min(1, "Titel erforderlich"),
+  chapterId: z.string().min(1, "Kapitel wählen"),
   description: z.string().optional(),
-  video_url: z.string().url("Ungültige URL"),
+  video_url: z.string().min(1, "Video-URL erforderlich"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -115,7 +115,7 @@ interface VideoFormProps {
   initialData?: Partial<FormValues>;
   onSuccess?: (updated?: {
     id: number;
-    title: string;
+    title?: string;
     description?: string;
     video_url: string;
   }) => void;
@@ -131,17 +131,24 @@ const VideoForm: React.FC<VideoFormProps> = ({
     queryKey: ["modules-accessible"],
     queryFn: async () => {
       const res = await learningAPI.getModulesAll();
-      return res.data as { id: number; title: string; is_public: boolean }[];
+      return res.data as {
+        id: number;
+        title: string;
+        is_public: boolean;
+        chapters?: { id: number; title: string; order: number }[];
+      }[];
     },
   });
 
   const [pendingVideos, setPendingVideos] = useState<FormValues[]>([]);
   const [isSavingAll, setIsSavingAll] = useState(false);
+  const [isValidatingUrl, setIsValidatingUrl] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<FormValues>({
@@ -150,6 +157,7 @@ const VideoForm: React.FC<VideoFormProps> = ({
   });
 
   const selectedModuleId = watch("moduleId");
+  const selectedChapterId = watch("chapterId");
 
   // Reset pending videos when module changes
   useEffect(() => {
@@ -159,11 +167,10 @@ const VideoForm: React.FC<VideoFormProps> = ({
   }, [selectedModuleId]);
 
   const handleAddVideo = (data: FormValues) => {
-    if (data.moduleId && data.title && data.video_url) {
+    if (data.moduleId && data.video_url) {
       setPendingVideos((prev) => [...prev, { ...data }]);
       reset({
         moduleId: data.moduleId, // Keep module selected
-        title: "",
         description: "",
         video_url: "",
       });
@@ -174,6 +181,41 @@ const VideoForm: React.FC<VideoFormProps> = ({
     setPendingVideos((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const validateVideoUrl = async (videoUrl: string) => {
+    if (!videoUrl.trim()) return;
+
+    setIsValidatingUrl(true);
+    try {
+      const response = await fetch(
+        "/api/elearning/modules/content/validate-video-url/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+          body: JSON.stringify({ video_url: videoUrl }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // URL validieren
+        setValue("video_url", data.video_url);
+
+        console.log("Video-URL validiert:", data);
+      } else {
+        alert(`Fehler bei der URL-Validierung: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Fehler bei der URL-Validierung:", error);
+      alert("Fehler bei der URL-Validierung");
+    } finally {
+      setIsValidatingUrl(false);
+    }
+  };
+
   const handleSaveAll = async () => {
     if (pendingVideos.length === 0) return;
 
@@ -181,12 +223,15 @@ const VideoForm: React.FC<VideoFormProps> = ({
     try {
       for (const video of pendingVideos) {
         const payloadCreate = {
-          module: Number(video.moduleId),
-          title: video.title,
+          chapter: Number(video.chapterId),
           description: video.description,
           video_url: video.video_url,
         } as const;
 
+        console.log(
+          "📡 [VideoForm] Creating video with payload:",
+          payloadCreate
+        );
         await learningAPI.createVideo(payloadCreate as any);
       }
 
@@ -205,7 +250,6 @@ const VideoForm: React.FC<VideoFormProps> = ({
       // Edit mode - save single video
       try {
         const payloadUpdate = {
-          title: data.title,
           description: data.description,
           video_url: data.video_url,
         } as const;
@@ -237,7 +281,9 @@ const VideoForm: React.FC<VideoFormProps> = ({
                 className="flex items-center justify-between bg-white p-3 rounded border"
               >
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{video.title}</p>
+                  <p className="font-medium text-gray-900">
+                    Titel wird automatisch aus Dateinamen gesetzt
+                  </p>
                   <p className="text-sm text-gray-600">{video.video_url}</p>
                 </div>
                 <button
@@ -299,11 +345,18 @@ const VideoForm: React.FC<VideoFormProps> = ({
           error={errors.moduleId?.message}
           {...register("moduleId")}
         />
-        <Input
-          label="Video-Titel"
-          placeholder="Einführung"
-          error={errors.title?.message}
-          {...register("title")}
+        <Select
+          label="Kapitel-Auswahl"
+          options={
+            modulesData
+              ?.find((m) => m.id.toString() === selectedModuleId)
+              ?.chapters?.map((c) => ({
+                value: c.id.toString(),
+                label: c.title,
+              })) ?? []
+          }
+          error={errors.chapterId?.message}
+          {...register("chapterId")}
         />
         <TextArea
           label="Beschreibung"
@@ -311,12 +364,38 @@ const VideoForm: React.FC<VideoFormProps> = ({
           error={errors.description?.message}
           {...register("description")}
         />
-        <Input
-          label="Video-URL"
-          placeholder="https://..."
-          error={errors.video_url?.message}
-          {...register("video_url")}
-        />
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Video-URL (aus Wasabi Cloud)
+          </label>
+          <div className="flex space-x-2">
+            <input
+              className={clsx(
+                "flex-1 mt-1 block w-full py-2 px-3 border rounded-md shadow-sm focus:outline-none focus:ring-[#ff863d] focus:border-[#ff863d] sm:text-sm",
+                errors.video_url ? "border-red-500" : "border-gray-300"
+              )}
+              placeholder="https://s3.eu-central-2.wasabisys.com/dsp-e-learning/Lerninhalte/..."
+              {...register("video_url")}
+            />
+            <button
+              type="button"
+              onClick={() => validateVideoUrl(watch("video_url"))}
+              disabled={isValidatingUrl || !watch("video_url")}
+              className="mt-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-md text-sm"
+            >
+              {isValidatingUrl ? "Prüfen..." : "URL prüfen"}
+            </button>
+          </div>
+          {errors.video_url && (
+            <p className="mt-1 text-xs text-red-600">
+              {errors.video_url.message}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">
+            Füge die Wasabi Cloud-URL des Videos ein. Der Titel wird automatisch
+            aus dem Dateinamen extrahiert.
+          </p>
+        </div>
 
         <div className="flex space-x-3">
           <button
