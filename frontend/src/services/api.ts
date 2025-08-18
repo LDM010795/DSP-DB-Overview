@@ -9,7 +9,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8000/api/db-overview";
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:8000/api";
 
 // Axios-Instance mit Standardkonfiguration
 const api = axios.create({
@@ -157,7 +157,7 @@ export const dbOverviewAPI = {
    * Diese Funktion ist das Herzstück der Anwendung
    */
   async getDatabaseSchema(): Promise<DatabaseSchemaResponse> {
-    const response = await api.get("/schema/");
+    const response = await api.get("/db-overview/schema/");
     return response.data;
   },
 
@@ -171,9 +171,12 @@ export const dbOverviewAPI = {
     page: number = 1,
     pageSize: number = 20
   ): Promise<TableDataResponse> {
-    const response = await api.get(`/table/${appLabel}/${modelName}/`, {
-      params: { page, page_size: pageSize },
-    });
+    const response = await api.get(
+      `/db-overview/table/${appLabel}/${modelName}/`,
+      {
+        params: { page, page_size: pageSize },
+      }
+    );
     return response.data;
   },
 
@@ -182,7 +185,7 @@ export const dbOverviewAPI = {
    * Für Performance-Analysen und Optimierung
    */
   async getDatabaseStatistics(): Promise<DatabaseStatistics> {
-    const response = await api.get("/statistics/");
+    const response = await api.get("/db-overview/statistics/");
     return response.data;
   },
 };
