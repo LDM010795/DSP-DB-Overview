@@ -19,58 +19,12 @@
  * Version: 1.0.0
  */
 
-import axios from "axios";
+import { apiClient } from "./config";
 
 // --- API-Konfiguration ---
 
-const API_BASE_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:8000/api";
-
-const learningApi = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// --- Request/Response Interceptors ---
-
-// Logging für Debugging
-learningApi.interceptors.request.use(
-  (config) => {
-    console.log(
-      `📡 [LearningAPI] ${config.method?.toUpperCase()} ${config.url}`
-    );
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Fehlerbehandlung und Token-Validierung
-learningApi.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("[LearningAPI] Error", error.response ?? error);
-    if (error.response?.status === 401) {
-      // Token abgelaufen – automatisch ausloggen und zur Login-Seite navigieren
-      import("./authService").then(({ authService }) => {
-        authService.logout();
-        window.location.href = "/login";
-      });
-    }
-    return Promise.reject(error);
-  }
-);
-
-// JWT Token-Injection
-learningApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+// Verwende die zentrale Axios-Instanz
+const learningApi = apiClient;
 
 // --- API-Typen ---
 

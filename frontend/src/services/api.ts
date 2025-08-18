@@ -6,58 +6,10 @@
  * für bessere Wartbarkeit, Fehlerbehandlung und Caching.
  */
 
-import axios from "axios";
+import { apiClient } from "./config";
 
-const API_BASE_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:8000/api";
-
-// Axios-Instance mit Standardkonfiguration
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000, // 30 Sekunden für komplexe Schema-Analysen
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Attach JWT token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// Request-Interceptor für Logging
-api.interceptors.request.use(
-  (config) => {
-    console.log(
-      `🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`
-    );
-    return config;
-  },
-  (error) => {
-    console.error("❌ API Request Error:", error);
-    return Promise.reject(error);
-  }
-);
-
-// Response-Interceptor für Fehlerbehandlung
-api.interceptors.response.use(
-  (response) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
-    return response;
-  },
-  (error) => {
-    console.error("❌ API Response Error:", error);
-    if (error.response?.status === 401) {
-      import("./authService").then(({ authService }) => {
-        authService.logout();
-        window.location.href = "/login";
-      });
-    }
-    return Promise.reject(error);
-  }
-);
+// Verwende die zentrale Axios-Instanz
+const api = apiClient;
 
 // Typen für API-Responses
 export interface SchemaField {

@@ -18,12 +18,7 @@
  * Version: 1.0.0
  */
 
-import axios from "axios";
-
-// --- Konfiguration ---
-
-const BASE_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:8000/api";
+import { apiClient } from "./config";
 
 // --- Typen ---
 
@@ -54,13 +49,10 @@ export const authService = {
    */
   async login(username: string, password: string): Promise<TokenResponse> {
     try {
-      const res = await axios.post<TokenResponse>(
-        `${BASE_URL}/elearning/token/`,
-        {
-          username,
-          password,
-        }
-      );
+      const res = await apiClient.post<TokenResponse>("/elearning/token/", {
+        username,
+        password,
+      });
 
       // Token im localStorage speichern
       localStorage.setItem("access", res.data.access);
