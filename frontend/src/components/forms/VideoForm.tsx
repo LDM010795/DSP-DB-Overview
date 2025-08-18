@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { learningAPI } from "../../services/learningApi";
 
 // ---------------- Schema ---------------------------------------------
@@ -127,6 +127,8 @@ const VideoForm: React.FC<VideoFormProps> = ({
   initialData,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
+
   const { data: modulesData } = useQuery({
     queryKey: ["modules-accessible"],
     queryFn: async () => {
@@ -238,6 +240,17 @@ const VideoForm: React.FC<VideoFormProps> = ({
       console.log(`${pendingVideos.length} Videos gespeichert`);
       setPendingVideos([]);
       reset();
+
+      // Cache für alle relevanten Module invalidieren um UI sofort zu aktualisieren
+      queryClient.invalidateQueries({ queryKey: ["modules-all"] });
+      queryClient.invalidateQueries({ queryKey: ["modules-accessible"] });
+      // Invalidiere auch Module-Details für das spezifische Modul
+      const firstVideoModuleId = pendingVideos[0]?.moduleId;
+      if (firstVideoModuleId) {
+        queryClient.invalidateQueries({
+          queryKey: ["module-detail", Number(firstVideoModuleId)],
+        });
+      }
     } catch (e: unknown) {
       if (e instanceof Error) alert("Fehler beim Speichern: " + e.message);
     } finally {
@@ -256,6 +269,13 @@ const VideoForm: React.FC<VideoFormProps> = ({
 
         const res = await learningAPI.updateVideo(id, payloadUpdate as any);
         console.log("Video aktualisiert");
+
+        // Cache invalidieren für UI-Update
+        queryClient.invalidateQueries({ queryKey: ["modules-all"] });
+        queryClient.invalidateQueries({ queryKey: ["modules-accessible"] });
+        // Invalidiere auch alle Module-Details (da wir nicht sicher sind welches Modul betroffen ist)
+        queryClient.invalidateQueries({ queryKey: ["module-detail"] });
+
         onSuccess?.(res.data);
       } catch (e: unknown) {
         if (e instanceof Error) alert("Fehler: " + e.message);

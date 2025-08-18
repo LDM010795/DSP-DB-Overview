@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { learningAPI } from "../../services/learningApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ----- Schemas ------------------------------------------------------------
 
@@ -113,6 +114,8 @@ const TextArea: React.FC<TextAreaProps> = ({ label, error, ...rest }) => (
 // ----- Hauptformular ------------------------------------------------------
 
 const LearningContentForm: React.FC = () => {
+  const queryClient = useQueryClient();
+
   const {
     register,
     control,
@@ -151,6 +154,19 @@ const LearningContentForm: React.FC = () => {
           title: data.label,
           description: `Resource: ${data.label}`,
           video_url: data.url,
+        });
+      }
+
+      // Cache für alle relevanten Module invalidieren um UI sofort zu aktualisieren
+      queryClient.invalidateQueries({ queryKey: ["modules-all"] });
+      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({ queryKey: ["modules-accessible"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+
+      // Invalidiere auch Module-Details falls ein Video zu einem bestimmten Modul hinzugefügt wurde
+      if (data.contentType === "video") {
+        queryClient.invalidateQueries({
+          queryKey: ["module-detail", parseInt(data.moduleId)],
         });
       }
 

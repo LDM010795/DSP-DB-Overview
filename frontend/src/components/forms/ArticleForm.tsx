@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { learningAPI } from "../../services/learningApi";
 
 const schema = z.object({
@@ -59,7 +59,11 @@ const Select: React.FC<SelectProps> = ({ label, error, children, ...rest }) => (
 
 interface ArticleFormProps {
   mode?: "create" | "edit";
-  initialData?: any;
+  initialData?: {
+    id: number;
+    moduleId: string;
+    cloudUrl: string;
+  };
   onSuccess?: () => void;
 }
 
@@ -68,6 +72,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
   initialData,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [pendingArticles, setPendingArticles] = useState<FormValues[]>([]);
   const [isSavingAll, setIsSavingAll] = useState(false);
 
@@ -82,7 +87,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    watch,
+    // watch, // Removed unused variable
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initialData || {
@@ -91,7 +96,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
     },
   });
 
-  const watchedModuleId = watch("moduleId");
+  // const watchedModuleId = watch("moduleId"); // Removed unused variable
 
   const handleAddArticle = (data: FormValues) => {
     if (data.moduleId && data.cloudUrl) {
@@ -118,11 +123,26 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
           cloudUrl: article.cloudUrl,
         } as const;
 
-        await learningAPI.createArticleFromCloud(payloadCreate as any);
+        await learningAPI.createArticleFromCloud(payloadCreate);
       }
 
       console.log(`${pendingArticles.length} Artikel gespeichert`);
       setPendingArticles([]);
+
+      // Cache für alle relevanten Module invalidieren um UI sofort zu aktualisieren
+      queryClient.invalidateQueries({ queryKey: ["modules-all"] });
+      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({ queryKey: ["modules-accessible"] });
+      // Invalidiere auch Module-Details für betroffene Module
+      const affectedModuleIds = Array.from(
+        new Set(pendingArticles.map((a) => a.moduleId))
+      );
+      affectedModuleIds.forEach((moduleId) => {
+        queryClient.invalidateQueries({
+          queryKey: ["module-detail", Number(moduleId)],
+        });
+      });
+
       onSuccess?.();
     } catch (error) {
       console.error("Fehler beim Speichern der Artikel:", error);
@@ -145,6 +165,15 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
             data.cloudUrl?.split("/").pop()?.replace(".docx", "") || "Artikel",
           url: data.cloudUrl,
         });
+
+        // Cache invalidieren für UI-Update
+        queryClient.invalidateQueries({ queryKey: ["modules-all"] });
+        queryClient.invalidateQueries({ queryKey: ["modules"] });
+        queryClient.invalidateQueries({ queryKey: ["modules-accessible"] });
+        queryClient.invalidateQueries({
+          queryKey: ["module-detail", parseInt(data.moduleId || "0")],
+        });
+
         onSuccess?.();
       } catch (error) {
         console.error("Fehler beim Aktualisieren:", error);
@@ -176,7 +205,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
           {...register("moduleId")}
         >
           <option value="">Modul auswählen</option>
-          {modulesData?.data?.map((module: any) => (
+          {modulesData?.data?.map((module: { id: number; title: string }) => (
             <option key={module.id} value={module.id}>
               {module.title}
             </option>
@@ -219,7 +248,8 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
                       Modul:{" "}
                       {
                         modulesData?.data?.find(
-                          (m: any) => m.id === article.moduleId
+                          (m: { id: number; title: string }) =>
+                            m.id === Number(article.moduleId)
                         )?.title
                       }
                     </p>

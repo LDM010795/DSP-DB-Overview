@@ -39,7 +39,7 @@ interface ModuleDetail {
 
 const ManageContentPanel: React.FC = () => {
   const queryClient = useQueryClient();
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["modules-all"],
     queryFn: async () => {
       const res = await learningAPI.getModulesAll();
@@ -57,7 +57,7 @@ const ManageContentPanel: React.FC = () => {
     type: "module" | "video" | "article";
     id: number;
     moduleId?: number;
-    initialData?: any;
+    initialData?: Record<string, unknown>;
   } | null>(null);
 
   const { data: detailData } = useQuery<ModuleDetail | undefined>({
@@ -114,7 +114,9 @@ const ManageContentPanel: React.FC = () => {
 
   const handleCloseModal = () => {
     setSelected(null);
-    refetch();
+    // Cache invalidieren statt refetch für bessere Performance
+    queryClient.invalidateQueries({ queryKey: ["modules-all"] });
+    queryClient.invalidateQueries({ queryKey: ["module-detail", expanded] });
   };
 
   return (
@@ -128,7 +130,7 @@ const ManageContentPanel: React.FC = () => {
         ].map((btn) => (
           <button
             key={btn.id}
-            onClick={() => setFilter(btn.id as any)}
+            onClick={() => setFilter(btn.id as "all" | "public" | "private")}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
               filter === btn.id
                 ? "bg-[#ff863d] text-white"
@@ -199,7 +201,16 @@ const ManageContentPanel: React.FC = () => {
                         )
                       ) {
                         learningAPI.deleteModule(mod.id);
-                        refetch();
+                        // Cache invalidieren für UI-Update
+                        queryClient.invalidateQueries({
+                          queryKey: ["modules-all"],
+                        });
+                        queryClient.invalidateQueries({
+                          queryKey: ["modules"],
+                        });
+                        queryClient.invalidateQueries({
+                          queryKey: ["modules-accessible"],
+                        });
                       }
                     }}
                     className="inline-flex items-center px-3 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-md"
@@ -252,8 +263,13 @@ const ManageContentPanel: React.FC = () => {
                             order: idx + 1,
                           });
                         });
-                        // Daten neu laden um die Änderungen anzuzeigen
-                        refetch();
+                        // Cache invalidieren für UI-Update
+                        queryClient.invalidateQueries({
+                          queryKey: ["modules-all"],
+                        });
+                        queryClient.invalidateQueries({
+                          queryKey: ["module-detail", expanded],
+                        });
                       }}
                       onVideoEdit={(item) =>
                         setSelected({
@@ -298,8 +314,13 @@ const ManageContentPanel: React.FC = () => {
                           }
 
                           learningAPI.deleteVideo(item.id);
-                          // Refetch data to update UI
-                          refetch();
+                          // Cache invalidieren für UI-Update
+                          queryClient.invalidateQueries({
+                            queryKey: ["modules-all"],
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: ["module-detail", expanded],
+                          });
                         }
                       }}
                       onChapterDelete={(chapter) => {
@@ -337,8 +358,13 @@ const ManageContentPanel: React.FC = () => {
                           }
 
                           learningAPI.deleteChapter(chapter.id);
-                          // Refetch data to update UI
-                          refetch();
+                          // Cache invalidieren für UI-Update
+                          queryClient.invalidateQueries({
+                            queryKey: ["modules-all"],
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: ["module-detail", expanded],
+                          });
                         }
                       }}
                     />
@@ -430,6 +456,13 @@ const ManageContentPanel: React.FC = () => {
                           setArticleList((prev) =>
                             prev.filter((a) => a.id !== item.id)
                           );
+                          // Cache invalidieren für UI-Update
+                          queryClient.invalidateQueries({
+                            queryKey: ["modules-all"],
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: ["module-detail", expanded],
+                          });
                         }
                       }}
                     />
@@ -467,7 +500,13 @@ const ManageContentPanel: React.FC = () => {
         {selected?.type === "article" && selected.id && selected.moduleId && (
           <ArticleForm
             mode="edit"
-            initialData={selected.initialData}
+            initialData={
+              selected.initialData as {
+                id: number;
+                moduleId: string;
+                cloudUrl: string;
+              }
+            }
             onSuccess={() => {
               handleCloseModal();
             }}

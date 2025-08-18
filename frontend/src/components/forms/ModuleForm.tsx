@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { learningAPI, type ModulePayload } from "../../services/learningApi";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const schema = z.object({
   title: z.string().min(1, "Titel erforderlich"),
@@ -81,6 +81,8 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
   initialData,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
+
   const {
     register,
     handleSubmit,
@@ -104,10 +106,19 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
       if (mode === "edit" && id) {
         await learningAPI.updateModule(id, payload);
         console.log("Modul aktualisiert");
+
+        // Cache für alle Module invalidieren um UI zu aktualisieren
+        queryClient.invalidateQueries({ queryKey: ["modules-all"] });
+        queryClient.invalidateQueries({ queryKey: ["modules"] });
+        queryClient.invalidateQueries({ queryKey: ["module-detail", id] });
       } else {
         await learningAPI.createModule(payload);
         console.log("Modul gespeichert");
         reset();
+
+        // Cache für alle Module invalidieren um neues Modul sofort anzuzeigen
+        queryClient.invalidateQueries({ queryKey: ["modules-all"] });
+        queryClient.invalidateQueries({ queryKey: ["modules"] });
       }
       onSuccess?.();
     } catch (e: unknown) {
