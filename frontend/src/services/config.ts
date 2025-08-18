@@ -91,11 +91,38 @@ export const createServiceClient = (baseURL: string) => {
     headers: API_CONFIG.DEFAULT_HEADERS,
   });
 
-  // Gleiche Interceptors wie die Haupt-Instanz
-  client.interceptors.request.use(apiClient.interceptors.request.handlers[0]);
+  // Gleiche Interceptors-Logik wie die Haupt-Instanz
+  client.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem("access");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      console.log(
+        `📡 API Request: ${config.method?.toUpperCase()} ${config.url}`
+      );
+      return config;
+    },
+    (error) => {
+      console.error("❌ API Request Error:", error);
+      return Promise.reject(error);
+    }
+  );
+
   client.interceptors.response.use(
-    apiClient.interceptors.response.handlers[0],
-    apiClient.interceptors.response.handlers[1]
+    (response) => {
+      console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+      return response;
+    },
+    (error) => {
+      console.error("❌ API Response Error:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        window.location.href = "/login";
+      }
+      return Promise.reject(error);
+    }
   );
 
   return client;
