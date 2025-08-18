@@ -89,7 +89,8 @@ export interface ChapterPayload {
 }
 
 export interface VideoPayload {
-  chapter: number;
+  module_id: number;
+  title: string;
   description?: string;
   video_url: string;
   order?: number; // Für Drag & Drop Reordering
@@ -268,14 +269,6 @@ export const learningAPI = {
   deleteArticle: (id: string | number) =>
     learningApi.delete(`/elearning/modules/article/${id}/`),
 
-  // --- Chapter Management ---
-
-  /**
-   * Kapitel löschen
-   */
-  deleteChapter: (id: string | number) =>
-    learningApi.delete(`/elearning/modules/chapters/${id}/delete/`),
-
   // --- Category CRUD-Operationen ---
 
   /**
@@ -300,22 +293,6 @@ export const learningAPI = {
    */
   deleteCategory: (id: string | number) =>
     learningApi.delete(`/elearning/modules/categories/${id}/`),
-
-  // --- Module Management ---
-
-  /**
-   * Modul löschen
-   */
-  deleteModule: (id: string | number) =>
-    learningApi.delete(`/elearning/modules/${id}/`),
-
-  // --- Video Management ---
-
-  /**
-   * Video löschen
-   */
-  deleteVideo: (id: string | number) =>
-    learningApi.delete(`/elearning/modules/content/${id}/`),
 
   // --- Article Management ---
 

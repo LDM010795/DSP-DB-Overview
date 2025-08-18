@@ -459,14 +459,7 @@ const ManageContentPanel: React.FC = () => {
             mode="edit"
             id={selected.id}
             initialData={selected.initialData}
-            onSuccess={(upd) => {
-              if (upd) {
-                setVideoList((list) =>
-                  list.map((v: any) =>
-                    v.id === upd!.id ? { ...v, ...(upd as any) } : v
-                  )
-                );
-              }
+            onSuccess={() => {
               handleCloseModal();
             }}
           />
@@ -474,16 +467,8 @@ const ManageContentPanel: React.FC = () => {
         {selected?.type === "article" && selected.id && selected.moduleId && (
           <ArticleForm
             mode="edit"
-            id={selected.id}
             initialData={selected.initialData}
-            onSuccess={(upd) => {
-              if (upd) {
-                setArticleList((list) =>
-                  list.map((a: any) =>
-                    a.id === upd!.id ? { ...a, ...(upd as any) } : a
-                  )
-                );
-              }
+            onSuccess={() => {
               handleCloseModal();
             }}
           />

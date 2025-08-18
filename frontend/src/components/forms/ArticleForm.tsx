@@ -139,7 +139,12 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
     if (mode === "edit") {
       // Handle edit mode
       try {
-        await learningAPI.updateArticle(initialData.id, data);
+        await learningAPI.updateArticle(initialData.id, {
+          module_id: parseInt(data.moduleId || "0"),
+          title:
+            data.cloudUrl?.split("/").pop()?.replace(".docx", "") || "Artikel",
+          url: data.cloudUrl,
+        });
         onSuccess?.();
       } catch (error) {
         console.error("Fehler beim Aktualisieren:", error);
