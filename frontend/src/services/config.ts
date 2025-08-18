@@ -92,44 +92,10 @@ export const createServiceClient = (baseURL: string) => {
   });
 
   // Gleiche Interceptors wie die Haupt-Instanz
-  client.interceptors.request.use(
-    (config) => {
-      // JWT Token automatisch anhängen
-      const token = localStorage.getItem("access");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-
-      // Logging für Debugging
-      console.log(
-        `📡 API Request: ${config.method?.toUpperCase()} ${config.url}`
-      );
-
-      return config;
-    },
-    (error) => {
-      console.error("❌ API Request Error:", error);
-      return Promise.reject(error);
-    }
-  );
-
+  client.interceptors.request.use(apiClient.interceptors.request.handlers[0]);
   client.interceptors.response.use(
-    (response) => {
-      console.log(`✅ API Response: ${response.status} ${response.config.url}`);
-      return response;
-    },
-    (error) => {
-      console.error("❌ API Response Error:", error);
-
-      // Automatisches Logout bei 401-Fehlern
-      if (error.response?.status === 401) {
-        localStorage.removeItem("access");
-        localStorage.removeItem("refresh");
-        window.location.href = "/login";
-      }
-
-      return Promise.reject(error);
-    }
+    apiClient.interceptors.response.handlers[0],
+    apiClient.interceptors.response.handlers[1]
   );
 
   return client;

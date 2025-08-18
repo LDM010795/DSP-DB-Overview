@@ -123,7 +123,7 @@ export const learningAPI = {
    * Modul löschen
    */
   deleteModule: (id: string | number) =>
-    learningApi.delete(`/elearning/modules/${id}/`),
+    learningApi.delete(`/elearning/modules/${id}/delete/`),
 
   // --- Chapter CRUD-Operationen ---
 
