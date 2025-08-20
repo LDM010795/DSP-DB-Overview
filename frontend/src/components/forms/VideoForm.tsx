@@ -113,6 +113,8 @@ interface VideoFormProps {
   mode?: "create" | "edit";
   id?: number;
   initialData?: Partial<FormValues>;
+  moduleId?: number; // New prop for pre-selecting module
+  chapterId?: number; // New prop for pre-selecting chapter
   onSuccess?: (updated?: {
     id: number;
     title?: string;
@@ -125,6 +127,8 @@ const VideoForm: React.FC<VideoFormProps> = ({
   mode = "create",
   id,
   initialData,
+  moduleId,
+  chapterId,
   onSuccess,
 }) => {
   const queryClient = useQueryClient();
@@ -155,7 +159,10 @@ const VideoForm: React.FC<VideoFormProps> = ({
     reset,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: initialData ?? {},
+    defaultValues: initialData ?? {
+      moduleId: moduleId?.toString() || "",
+      chapterId: chapterId?.toString() || "",
+    },
   });
 
   const selectedModuleId = watch("moduleId");

@@ -8,6 +8,7 @@ import { learningAPI } from "../../services/learningApi";
 
 const schema = z.object({
   moduleId: z.string().min(1, "Modul wählen"),
+  chapterId: z.string().optional(), // Optional chapter assignment
   cloudUrl: z.string().url("Ungültige Cloud-URL"),
 });
 
@@ -62,14 +63,19 @@ interface ArticleFormProps {
   initialData?: {
     id: number;
     moduleId: string;
+    chapterId?: string;
     cloudUrl: string;
   };
+  moduleId?: number; // New prop for pre-selecting module
+  chapterId?: number; // New prop for pre-selecting chapter
   onSuccess?: () => void;
 }
 
 const ArticleForm: React.FC<ArticleFormProps> = ({
   mode = "create",
   initialData,
+  moduleId,
+  chapterId,
   onSuccess,
 }) => {
   const queryClient = useQueryClient();
@@ -82,27 +88,88 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
     queryFn: learningAPI.getModulesAll,
   });
 
+  // Fetch chapters for dropdown
+  const { data: chaptersData, isLoading: chaptersLoading } = useQuery({
+    queryKey: ["chapters"],
+    queryFn: learningAPI.getChaptersAll,
+  });
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    // watch, // Removed unused variable
+    watch,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initialData || {
-      moduleId: "",
+      moduleId: moduleId?.toString() || "",
+      chapterId: chapterId?.toString() || "",
       cloudUrl: "",
     },
   });
 
-  // const watchedModuleId = watch("moduleId"); // Removed unused variable
+  const watchedModuleId = watch("moduleId");
+
+  // Debug logging
+  console.log("🔍 [ArticleForm] Debug info:");
+  console.log(
+    "🔍 watchedModuleId:",
+    watchedModuleId,
+    "type:",
+    typeof watchedModuleId
+  );
+  console.log("🔍 chaptersData:", chaptersData?.data);
+  console.log("🔍 Sample chapter:", chaptersData?.data?.[0]);
+
+  // Filter chapters by selected module
+  const filteredChapters =
+    chaptersData?.data?.filter(
+      (chapter: {
+        id: number;
+        title: string;
+        module?: { id: number } | number;
+      }) => {
+        // Handle both module object and module_id
+        let chapterModuleId: number;
+        if (typeof chapter.module === "object" && chapter.module !== null) {
+          chapterModuleId = chapter.module.id;
+        } else if (typeof chapter.module === "number") {
+          chapterModuleId = chapter.module;
+        } else {
+          chapterModuleId = 0;
+        }
+
+        console.log(
+          "🔍 Chapter:",
+          chapter.title,
+          "module:",
+          chapter.module,
+          "moduleId:",
+          chapterModuleId,
+          "watchedModuleId:",
+          watchedModuleId
+        );
+        return chapterModuleId === parseInt(watchedModuleId || "0");
+      }
+    ) || [];
+
+  console.log("🔍 Filtered chapters:", filteredChapters);
+
+  // Reset chapter selection when module changes
+  React.useEffect(() => {
+    if (watchedModuleId) {
+      console.log("🔍 Module changed, resetting chapter selection");
+      // Note: Chapter selection will be reset when form is submitted
+    }
+  }, [watchedModuleId]);
 
   const handleAddArticle = (data: FormValues) => {
     if (data.moduleId && data.cloudUrl) {
       setPendingArticles((prev) => [...prev, { ...data }]);
       reset({
         moduleId: data.moduleId, // Keep module selected
+        chapterId: data.chapterId, // Keep chapter selected
         cloudUrl: "", // Clear URL for next entry
       });
     }
@@ -120,6 +187,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       for (const article of pendingArticles) {
         const payloadCreate = {
           moduleId: article.moduleId,
+          chapterId: article.chapterId,
           cloudUrl: article.cloudUrl,
         } as const;
 
@@ -161,6 +229,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       try {
         await learningAPI.updateArticle(initialData.id, {
           module_id: parseInt(data.moduleId || "0"),
+          chapter_id: data.chapterId ? parseInt(data.chapterId) : null,
           title:
             data.cloudUrl?.split("/").pop()?.replace(".docx", "") || "Artikel",
           url: data.cloudUrl,
@@ -184,7 +253,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
     }
   };
 
-  if (modulesLoading) {
+  if (modulesLoading || chaptersLoading) {
     return (
       <div className="flex justify-center items-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ff863d]"></div>
@@ -211,6 +280,32 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
             </option>
           ))}
         </Select>
+
+        <Select
+          label="Kapitel"
+          error={errors.chapterId?.message}
+          {...register("chapterId")}
+        >
+          <option value="">
+            {watchedModuleId
+              ? `Kapitel auswählen (${filteredChapters.length} verfügbar)`
+              : "Zuerst Modul wählen"}
+          </option>
+          {filteredChapters.map((chapter: { id: number; title: string }) => (
+            <option key={chapter.id} value={chapter.id}>
+              {chapter.title}
+            </option>
+          ))}
+        </Select>
+
+        {/* Debug Info */}
+        {watchedModuleId && (
+          <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+            <div>Debug: Modul ID: {watchedModuleId}</div>
+            <div>Gefilterte Kapitel: {filteredChapters.length}</div>
+            <div>Alle Kapitel: {chaptersData?.data?.length || 0}</div>
+          </div>
+        )}
 
         <Input
           label="Cloud-URL des Word-Dokuments"

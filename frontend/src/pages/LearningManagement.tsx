@@ -24,8 +24,10 @@ import ModuleForm from "../components/forms/ModuleForm";
 import ChapterForm from "../components/forms/ChapterForm";
 import VideoForm from "../components/forms/VideoForm";
 import ArticleForm from "../components/forms/ArticleForm";
+import TaskForm from "../components/forms/TaskForm";
 import CategoryForm from "../components/forms/CategoryForm";
 import ManageContentPanel from "../components/manage/ManageContentPanel";
+import HierarchicalContentManager from "../components/manage/HierarchicalContentManager";
 import { useState } from "react";
 import CategoryList from "../components/CategoryList";
 
@@ -37,13 +39,16 @@ import CategoryList from "../components/CategoryList";
  */
 const LearningManagement: React.FC = () => {
   // --- State Management ---
-  const [view, setView] = useState<"create" | "manage">("create");
+  const [view, setView] = useState<"create" | "manage" | "hierarchical">(
+    "create"
+  );
   const [tab, setTab] = useState("module");
 
   // --- Navigation-Konfiguration ---
   const categories = [
     { id: "create", label: "Daten anlegen" },
     { id: "manage", label: "Daten verwalten" },
+    { id: "hierarchical", label: "Hierarchische Verwaltung" },
   ];
 
   const tabs = [
@@ -52,6 +57,7 @@ const LearningManagement: React.FC = () => {
     { id: "chapter", label: "Kapitel anlegen" },
     { id: "video", label: "Lernvideo anlegen" },
     { id: "article", label: "Lernbeitrag anlegen" },
+    { id: "task", label: "Aufgabe anlegen" },
   ];
 
   return (
@@ -68,7 +74,9 @@ const LearningManagement: React.FC = () => {
         {categories.map((c) => (
           <button
             key={c.id}
-            onClick={() => setView(c.id as "create" | "manage")}
+            onClick={() =>
+              setView(c.id as "create" | "manage" | "hierarchical")
+            }
             className={`px-4 py-2 rounded-md font-medium transition-colors ${
               view === c.id
                 ? "bg-[#ff863d] text-white"
@@ -105,6 +113,7 @@ const LearningManagement: React.FC = () => {
           {tab === "chapter" && <ChapterForm />}
           {tab === "video" && <VideoForm />}
           {tab === "article" && <ArticleForm />}
+          {tab === "task" && <TaskForm />}
           {tab === "category" && (
             <div className="grid md:grid-cols-2 gap-8">
               <CategoryForm
@@ -123,6 +132,13 @@ const LearningManagement: React.FC = () => {
       {view === "manage" && (
         <div className="bg-white shadow-sm rounded-xl p-6">
           <ManageContentPanel />
+        </div>
+      )}
+
+      {/* --- Hierarchical-Modus --- */}
+      {view === "hierarchical" && (
+        <div className="bg-white shadow-sm rounded-xl p-6">
+          <HierarchicalContentManager />
         </div>
       )}
     </div>

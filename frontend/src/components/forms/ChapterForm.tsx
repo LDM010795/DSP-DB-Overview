@@ -96,6 +96,7 @@ interface ChapterFormProps {
   mode?: "create" | "edit";
   id?: number;
   initialData?: Partial<FormValues>;
+  moduleId?: number; // New prop for pre-selecting module
   onSuccess?: () => void;
 }
 
@@ -103,6 +104,7 @@ const ChapterForm: React.FC<ChapterFormProps> = ({
   mode = "create",
   id,
   initialData,
+  moduleId,
   onSuccess,
 }) => {
   const {
@@ -112,7 +114,11 @@ const ChapterForm: React.FC<ChapterFormProps> = ({
     reset,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: initialData ?? { order: 0, is_active: true },
+    defaultValues: initialData ?? {
+      order: 0,
+      is_active: true,
+      moduleId: moduleId?.toString() || "",
+    },
   });
 
   const onSubmit = async (data: FormValues) => {

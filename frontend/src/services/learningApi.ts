@@ -58,10 +58,11 @@ export interface VideoUpdatePayload {
 }
 
 export interface ContentPayload {
-  moduleId: string;
+  moduleId: string | number;
   title: string;
   description?: string;
   url: string;
+  order?: number;
 }
 
 export interface ResourcePayload {
@@ -72,6 +73,7 @@ export interface ResourcePayload {
 
 export interface ArticlePayload {
   module_id: number;
+  chapter_id?: number | null;
   title: string;
   url: string;
   order?: number;
@@ -79,11 +81,32 @@ export interface ArticlePayload {
 
 export interface ArticleFromCloudPayload {
   moduleId: string;
+  chapterId?: string;
   cloudUrl: string;
 }
 
 export interface CategoryPayload {
   name: string;
+}
+
+export interface TaskPayload {
+  chapter: number;
+  title: string;
+  description: string;
+  difficulty: string;
+  hint?: string;
+  order?: number;
+}
+
+export interface TaskMultipleChoicePayload {
+  task: number;
+  question: string;
+  option_1: string;
+  option_2: string;
+  option_3: string;
+  option_4: string;
+  correct_answer: number;
+  order?: number;
 }
 
 // --- Learning API Service ---
@@ -104,26 +127,21 @@ export const learningAPI = {
     learningApi.put(`/elearning/modules/${id}/`, data),
 
   /**
-   * Öffentliche Module abrufen
+   * Modul löschen
    */
-  getModules: () => learningApi.get("/elearning/modules/public/"),
+  deleteModule: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/${id}/`),
 
   /**
-   * Alle Module abrufen (Admin)
+   * Alle Module abrufen
    */
   getModulesAll: () => learningApi.get("/elearning/modules/"),
 
   /**
-   * Modul-Details abrufen
+   * Einzelnes Modul abrufen
    */
   getModule: (id: string | number) =>
     learningApi.get(`/elearning/modules/${id}/detail/`),
-
-  /**
-   * Modul löschen
-   */
-  deleteModule: (id: string | number) =>
-    learningApi.delete(`/elearning/modules/${id}/delete/`),
 
   // --- Chapter CRUD-Operationen ---
 
@@ -140,16 +158,100 @@ export const learningAPI = {
     learningApi.put(`/elearning/modules/chapters/${id}/`, data),
 
   /**
-   * Kapitel-Details abrufen
-   */
-  getChapter: (id: string | number) =>
-    learningApi.get(`/elearning/modules/chapters/${id}/`),
-
-  /**
    * Kapitel löschen
    */
   deleteChapter: (id: string | number) =>
-    learningApi.delete(`/elearning/modules/chapters/${id}/delete/`),
+    learningApi.delete(`/elearning/modules/chapters/${id}/`),
+
+  /**
+   * Alle Kapitel abrufen
+   */
+  getChaptersAll: () => learningApi.get("/elearning/modules/chapters/list/"),
+
+  /**
+   * Einzelnes Kapitel abrufen
+   */
+  getChapter: (id: string | number) =>
+    learningApi.get(`/elearning/modules/chapters/${id}/detail/`),
+
+  // --- Task CRUD-Operationen ---
+
+  /**
+   * Neue Aufgabe erstellen
+   */
+  createTask: (data: TaskPayload) =>
+    learningApi.post("/elearning/modules/tasks/", data),
+
+  /**
+   * Aufgabe aktualisieren
+   */
+  updateTask: (id: string | number, data: TaskPayload) =>
+    learningApi.put(`/elearning/modules/tasks/${id}/`, data),
+
+  /**
+   * Aufgabe löschen
+   */
+  deleteTask: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/tasks/${id}/`),
+
+  /**
+   * Alle Aufgaben abrufen
+   */
+  getTasksAll: () => learningApi.get("/elearning/modules/tasks/list/"),
+
+  /**
+   * Aufgaben nach Kapitel abrufen
+   */
+  getTasksByChapter: (chapterId: string | number) =>
+    learningApi.get(`/elearning/modules/tasks/list/?chapter_id=${chapterId}`),
+
+  /**
+   * Einzelne Aufgabe abrufen
+   */
+  getTask: (id: string | number) =>
+    learningApi.get(`/elearning/modules/tasks/${id}/`),
+
+  // --- TaskMultipleChoice CRUD-Operationen ---
+
+  /**
+   * Neue Multiple Choice Frage erstellen
+   */
+  createTaskMultipleChoice: (data: TaskMultipleChoicePayload) =>
+    learningApi.post("/elearning/modules/task-multiple-choice/", data),
+
+  /**
+   * Multiple Choice Frage aktualisieren
+   */
+  updateTaskMultipleChoice: (
+    id: string | number,
+    data: TaskMultipleChoicePayload
+  ) => learningApi.put(`/elearning/modules/task-multiple-choice/${id}/`, data),
+
+  /**
+   * Multiple Choice Frage löschen
+   */
+  deleteTaskMultipleChoice: (id: string | number) =>
+    learningApi.delete(`/elearning/modules/task-multiple-choice/${id}/`),
+
+  /**
+   * Alle Multiple Choice Fragen abrufen
+   */
+  getTaskMultipleChoiceAll: () =>
+    learningApi.get("/elearning/modules/task-multiple-choice/list/"),
+
+  /**
+   * Multiple Choice Fragen nach Task abrufen
+   */
+  getTaskMultipleChoiceByTask: (taskId: string | number) =>
+    learningApi.get(
+      `/elearning/modules/task-multiple-choice/list/?task_id=${taskId}`
+    ),
+
+  /**
+   * Einzelne Multiple Choice Frage abrufen
+   */
+  getTaskMultipleChoice: (id: string | number) =>
+    learningApi.get(`/elearning/modules/task-multiple-choice/${id}/`),
 
   // --- Content CRUD-Operationen ---
 
@@ -247,13 +349,6 @@ export const learningAPI = {
    */
   deleteCategory: (id: string | number) =>
     learningApi.delete(`/elearning/modules/categories/${id}/`),
-
-  // --- Article Management ---
-
-  /**
-   * Alle Artikel abrufen
-   */
-  getArticlesAll: () => learningApi.get("/elearning/modules/article/"),
 };
 
 export default learningApi;
